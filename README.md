@@ -84,7 +84,7 @@ $ ./scripts/query-protocol-parameters.sh
 
 We will walk through the process of manually testing creating a vesting schedule and unlocking vested amounts.
 
-After following the setup steps above, first make sure that the `~/$BLOCKCHAIN_PREFIX/benefactor.addr` and `~/$BLOCKCHAIN_PREFIX/beneficiary.addr` have Ada.
+After following the setup steps above, first make sure that the `~/$BLOCKCHAIN_PREFIX/benefactor.addr` and `~/$BLOCKCHAIN_PREFIX/beneficiary.addr` have Ada. Additionally, make sure the addresses `beneficiary.addr`, `beneficiary1.addr1`, `benefactor2.addr` and `benefactor3.addr` have Ada as well.
 
 Now create a vesting schedule by calling:
 
