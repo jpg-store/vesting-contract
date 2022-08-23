@@ -119,9 +119,3 @@ $ scripts/query/beneficiary
 ```
 
 Note that if you wait until everything is vested, the beneficiary will have received all the value.
-
-# Reading
-
-To support the future treasury integration, the vesting UTxO can be read and then returned to the script address using the read redeemer.
-
-An example read transaction in `scripts/happy-path/read-tx.sh`.
