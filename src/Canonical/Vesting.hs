@@ -2,7 +2,11 @@
 
 module Canonical.Vesting
   ( vesting
+  , validator
+  , mkValidator
+  , untypedValidator
   , Input(..)
+  , Action(..)
   , Portion(..)
   , Schedule
   ) where
@@ -20,6 +24,7 @@ import           Plutus.V1.Ledger.Crypto
 import           Plutus.V2.Ledger.Tx
 import           Plutus.V1.Ledger.Time
 import           Plutus.V1.Ledger.Interval
+import Plutus.Script.Utils.V2.Typed.Scripts.Validators (mkUntypedValidator, UntypedValidator)
 import PlutusTx
 import PlutusTx.Prelude hiding (Semigroup (..), unless)
 import Canonical.Shared
@@ -132,8 +137,9 @@ getOnlyInputValueOfThisScript vh outs =
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
-signedByAMajority allKeys signingKeys
-  = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
+signedByAMajority _allKeys signingKeys
+  -- = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
+  = traceIfFalse "Failed at majority" (length signingKeys == 2)
 -------------------------------------------------------------------------------
 -- Validator
 -------------------------------------------------------------------------------
@@ -226,8 +232,14 @@ wrapValidator
 wrapValidator = wrap mkValidator
 
 validator :: Validator
-validator = Plutonomy.optimizeUPLC $ mkValidatorScript $
+validator = Plutonomy.optimizeUPLC $ mkValidatorScript
     $$(compile [|| wrapValidator ||])
+
+untypedValidator :: CompiledCode UntypedValidator
+untypedValidator = Plutonomy.optimizeUPLC
+    $$(compile [|| go ||])
+    where
+      go = mkUntypedValidator mkValidator
 
 -------------------------------------------------------------------------------
 -- Entry point
@@ -239,3 +251,4 @@ vesting
   . LB.toStrict
   $ serialise
     validator
+

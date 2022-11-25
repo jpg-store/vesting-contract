@@ -1,7 +1,7 @@
 cabal-version: 2.4
 name:          vesting
 version:       1.0.0.0
-license: MIT
+license:       MIT
 author:        Richard Wallace, Jonathan Fischoff
 maintainer:    jonathan@Canonicalllc.com
 build-type:    Simple
@@ -44,6 +44,7 @@ library
     , plutus-tx-plugin
     , serialise
     , plutonomy
+    , plutus-script-utils
 
   hs-source-dirs:  src
   ghc-options:
@@ -66,3 +67,17 @@ executable vesting-sc
     , plutus-tx
     , optparse-generic
     , text
+
+test-suite vesting-tests
+  import:         lang
+  type:           exitcode-stdio-1.0
+  main-is:        Spec.hs
+  hs-source-dirs: tests
+  other-modules:
+    Spec.Vesting
+  build-depends:
+    , base                  >=4.9 && <5
+    , plutus-simple-model
+    , plutus-ledger-api
+    , tasty
+    , vesting
