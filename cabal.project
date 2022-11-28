@@ -1,4 +1,4 @@
-ndex-state: 2022-05-18T00:00:00Z
+index-state: 2022-05-18T00:00:00Z
 
 packages: ./.
 
@@ -14,3 +14,6 @@ constraints:
   , hedgehog >= 1.1
 
 test-show-details: direct
+
+package plutonomy
+  flags: +plutus-f680ac697

@@ -1,13 +1,16 @@
 {
   description = "plutip-flake";
-  nixConfig.bash-prompt = "\\[\\e[0m\\][\\[\\e[0;2m\\]plutip-flake \\[\\e[0;1m\\]plutip-flake \\[\\e[0;93m\\]\\w\\[\\e[0m\\]]\\[\\e[0m\\]$ \\[\\e[0m\\]";
+  nixConfig.bash-prompt = "\\[\\e[0m\\][\\[\\e[0;2m\\]Audit \\[\\e[0;93m\\]\\w\\[\\e[0m\\]]\\[\\e[0m\\]$ \\[\\e[0m\\]";
 
   inputs = {
     nixpkgs.follows = "plutip/nixpkgs";
     haskell-nix.follows = "plutip/haskell-nix";
 
     plutip.url = "github:mlabs-haskell/plutip";
-    plutonomy.url = "github:well-typed/plutonomy";
+    plutonomy = {
+      url = "github:well-typed/plutonomy/6c01302ba8cf3be4f71617e106cd5ef7ed10fc63";
+      flake = false;
+    };
   };
 
   outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, ... }:
@@ -24,7 +27,7 @@
 
       deferPluginErrors = true;
 
-      offchain = rec {
+      audit = rec {
         ghcVersion = "ghc8107";
 
         projectFor = system:
@@ -66,7 +69,7 @@
 
                 tools.haskell-language-server = "latest";
 
-                additional = ps: [ ps.plutip ];
+                additional = ps: [ ps.plutip ps.plutus-tx-plugin ps.plutonomy ];
               };
             };
           in
@@ -76,17 +79,17 @@
     {
       inherit nixpkgsFor;
 
-      offchain = {
-        project = perSystem offchain.projectFor;
-        flake = perSystem (system: (offchain.projectFor system).flake { });
+      audit = {
+        project = perSystem audit.projectFor;
+        flake = perSystem (system: (audit.projectFor system).flake { });
       };
 
       packages = perSystem (system:
-        self.offchain.flake.${system}.packages
+        self.audit.flake.${system}.packages
       );
 
       devShells = perSystem (system: {
-        offchain = self.offchain.flake.${system}.devShell;
+        audit = self.audit.flake.${system}.devShell;
       });
     };
 }
