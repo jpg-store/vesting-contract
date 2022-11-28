@@ -79,5 +79,6 @@ test-suite vesting-tests
     , base                  >=4.9 && <5
     , plutus-simple-model
     , plutus-ledger-api
+    , plutip
     , tasty
     , vesting
