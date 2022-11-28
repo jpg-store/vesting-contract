@@ -43,7 +43,7 @@ library
     , plutus-tx
     , plutus-tx-plugin
     , serialise
-    , plutonomy
+    -- , plutonomy
     , plutus-script-utils
 
   hs-source-dirs:  src

@@ -7,10 +7,10 @@
     haskell-nix.follows = "plutip/haskell-nix";
 
     plutip.url = "github:mlabs-haskell/plutip";
+    plutonomy.url = "github:well-typed/plutonomy";
   };
 
-
-  outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, ... }:
+  outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, plutonomy, ... }:
     let
       defaultSystems = [ "x86_64-linux" "x86_64-darwin" ];
       perSystem = nixpkgs.lib.genAttrs defaultSystems;
@@ -62,7 +62,7 @@
 
                 tools.haskell-language-server = "latest";
 
-                additional = ps: [ ps.plutip ];
+                additional = ps: [ ps.plutip ps.plutonomy ];
               };
             };
           in
