@@ -68,16 +68,16 @@ executable vesting-sc
     , optparse-generic
     , text
 
-test-suite vesting-tests
-  import:         lang
-  type:           exitcode-stdio-1.0
-  main-is:        Spec.hs
-  hs-source-dirs: tests
-  other-modules:
-    Spec.Vesting
-  build-depends:
-    , base                  >=4.9 && <5
-    , plutus-simple-model
-    , plutus-ledger-api
-    , tasty
-    , vesting
+-- test-suite vesting-tests
+--   import:         lang
+--   type:           exitcode-stdio-1.0
+--   main-is:        Spec.hs
+--   hs-source-dirs: tests
+--   other-modules:
+--     Spec.Vesting
+--   build-depends:
+--     , base                  >=4.9 && <5
+--     , plutus-simple-model
+--     , plutus-ledger-api
+--     , tasty
+--     , vesting
