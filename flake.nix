@@ -10,7 +10,7 @@
     plutonomy.url = "github:well-typed/plutonomy";
   };
 
-  outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, plutonomy, ... }:
+  outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, ... }:
     let
       defaultSystems = [ "x86_64-linux" "x86_64-darwin" ];
       perSystem = nixpkgs.lib.genAttrs defaultSystems;
@@ -42,6 +42,10 @@
                   src = "${plutip}";
                   subdirs = [ "." ];
                 }
+                {
+                  src = inputs.plutonomy;
+                  subdirs = [ "." ];
+                }
               ];
               modules = plutip.haskellModules;
               shell = {
@@ -62,7 +66,7 @@
 
                 tools.haskell-language-server = "latest";
 
-                additional = ps: [ ps.plutip ps.plutonomy ];
+                additional = ps: [ ps.plutip ];
               };
             };
           in
