@@ -1,5 +1,5 @@
 {
-  description = "plutip-flake";
+  description = "vesting contract";
   nixConfig.bash-prompt = "\\[\\e[0m\\][\\[\\e[0;2m\\]Audit \\[\\e[0;93m\\]\\w\\[\\e[0m\\]]\\[\\e[0m\\]$ \\[\\e[0m\\]";
 
   inputs = {
@@ -36,7 +36,7 @@
             pkgs' = nixpkgsFor' system;
             plutipin = inputs.plutip.inputs;
             project = pkgs.haskell-nix.cabalProject' {
-              name = "plutip-flake";
+              name = "vesting-contract";
               src = ./.;
               compiler-nix-name = ghcVersion;
               inherit (plutip) cabalProjectLocal;

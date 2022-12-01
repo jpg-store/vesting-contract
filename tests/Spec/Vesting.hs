@@ -1,61 +1,56 @@
-{-# LANGUAGE NumericUnderscores #-}
-module Spec.Vesting (makeVesting, makeSuccessfulVesting, unlockVesting) where
+module Spec.Vesting
+  ( mkVesting
+  , toDatum
+  , toRedeemer
+  , getUtxos
+  )
+  where
 
-import Plutus.V1.Ledger.Api
+import Data.Text (Text)
+import qualified Data.List.NonEmpty as NonEmpty
 
-import Plutus.Model hiding (validatorHash)
-import Plutus.Model.V2 (mkTypedValidator)
-import Plutus.Model.Mock.Stat (Stat)
-import Canonical.Vesting (Input(..), Action(..), Portion(..), untypedValidator)
-import Control.Monad (void)
+import qualified Ledger.Scripts  as Scripts
+import Plutus.PAB.Effects.Contract.Builtin (EmptySchema)
+import qualified Canonical.Vesting as Vesting
+import qualified Ledger.Constraints  as Constraints
+import qualified Plutus.Contract  as Contract
+import Plutus.Contract (Contract, awaitTxConfirmed, submitTx)
+import Ledger (
+  TxId,
+  getCardanoTxId,
+  Datum(Datum),
+  Redeemer(Redeemer),
+  ValidatorHash, Value, TxOutRef, ChainIndexTxOut
+ )
+import PlutusTx (toBuiltinData, ToData)
+import Data.Map (Map)
 
-type Vesting = TypedValidator Input Action
 
--- vestingValHash :: ValidatorHash
--- vestingValHash = validatorHash validator
+mkVesting :: Vesting.Input -> Contract () EmptySchema Text TxId
+mkVesting vestingDatum = do
 
-vestingScript :: Vesting
-vestingScript = mkTypedValidator untypedValidator 
+  let
+      txSK :: Constraints.TxConstraints i o
+      txSK = Constraints.mustPayToOtherScript
+               vestingValHash
+               (toDatum vestingDatum)
+               (mconcat $ Vesting.amount <$> Vesting.schedule vestingDatum)
 
-makeVesting :: Input -> Run (Either FailReason Stat)
-makeVesting input = do
-  admin <- getMainUser
-  let tx :: Tx
-      tx = payToScript vestingScript (InlineDatum input) totalValue
+  tx <- submitTx txSK
+  awaitTxConfirmed $ getCardanoTxId tx
+  return (getCardanoTxId tx)
 
-      totalValue :: Value
-      totalValue = mconcat $ amount <$> schedule input
+toDatum :: forall a. ToData a => a -> Datum
+toDatum = Datum . toBuiltinData
 
-  sp <- spend admin totalValue
+toRedeemer :: forall a. ToData a => a -> Redeemer
+toRedeemer = Redeemer . toBuiltinData
 
-  signTx admin (tx <> userSpend sp) >>= sendTx
+vestingValHash :: ValidatorHash
+vestingValHash = Scripts.validatorHash Vesting.validator
 
-makeSuccessfulVesting :: Run ()
-makeSuccessfulVesting = do
-  now   <- currentTime
-  user1 <- newUser (adaValue 100)
-  void $ makeVesting (Input [user1] [Portion (now + 100 * oneSecond) (adaValue 100)])
 
-unlockVesting :: Run ()
-unlockVesting = do
-  now   <- currentTime
-  user1 <- newUser (adaValue 100)
-
-  let input = Input [user1] [Portion (now + 100 * oneSecond) (adaValue 100)]
-
-  void $ makeVesting input
-
-  waitUntil (now + 200 * oneSecond)
-
-  [(ref, _)] <- utxoAt vestingScript
-
-  let tx' :: Tx
-      tx' = mconcat [ spendScript vestingScript ref (Disburse [user1]) input
-                   , payToKey user1 (adaValue 99)
-                   , payToScript vestingScript (InlineDatum input) (adaValue 1)
-                   ]
-  tx <- validateIn (from (now + 200 * oneSecond)) tx'
-  void $ signTx user1 tx >>= sendTx
-
-oneSecond :: POSIXTime
-oneSecond = POSIXTime 1_000
+getUtxos :: Contract [Value] EmptySchema Text (Map TxOutRef ChainIndexTxOut)
+getUtxos = do
+  addr <- NonEmpty.head <$> Contract.ownAddresses
+  Contract.utxosAt addr
