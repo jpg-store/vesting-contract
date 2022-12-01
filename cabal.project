@@ -1,9 +1,19 @@
+-- run `nix flake lock --update-input hackageNix` after updating index-state.
 index-state: 2022-05-18T00:00:00Z
 
-packages: ./.
+with-compiler: ghc-8.10.7
+
+packages:
+  ./
 
 tests: true
 benchmarks: true
+
+source-repository-package
+   type: git
+   location: https://github.com/mlabs-haskell/plutus-simple-model
+   tag: 31a18e5dc28ae7620c06adfad061f06ec176346b
+   --sha256: sha256-A5X9O5YK/kksVC0Wp6CZwch6W29ZC2phq93L1VLZTbc=
 
 allow-newer:
     *:aeson

@@ -90,6 +90,7 @@
 
       devShells = perSystem (system: {
         audit = self.audit.flake.${system}.devShell;
+        default = self.audit.flake.${system}.devShell;
       });
     };
 }
