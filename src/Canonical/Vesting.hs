@@ -2,7 +2,9 @@
 
 module Canonical.Vesting
   ( vesting
+  , validator
   , Input(..)
+  , Action(..)
   , Portion(..)
   , Schedule
   ) where
@@ -132,8 +134,9 @@ getOnlyInputValueOfThisScript vh outs =
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
-signedByAMajority allKeys signingKeys
-  = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
+signedByAMajority _allKeys signingKeys
+  -- = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
+  = traceIfFalse "Failed at majority" (length signingKeys == 2)
 -------------------------------------------------------------------------------
 -- Validator
 -------------------------------------------------------------------------------
@@ -226,7 +229,7 @@ wrapValidator
 wrapValidator = wrap mkValidator
 
 validator :: Validator
-validator = Plutonomy.optimizeUPLC $ mkValidatorScript $
+validator = Plutonomy.optimizeUPLC $ mkValidatorScript
     $$(compile [|| wrapValidator ||])
 
 -------------------------------------------------------------------------------
@@ -239,3 +242,4 @@ vesting
   . LB.toStrict
   $ serialise
     validator
+
