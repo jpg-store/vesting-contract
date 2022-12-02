@@ -76,6 +76,7 @@ library audit
   ghc-options:    -threaded -rtsopts -with-rtsopts=-T
   exposed-modules:
     AuditPSM
+    Utils
   ghc-options: -fplugin-opt
     PlutusTx.Plugin:defer-errors
   build-depends:
@@ -87,6 +88,8 @@ library audit
     , optparse-applicative
     , vesting
     , split
+    , mtl
+    , lens
     , plutus-tx
     , plutus-tx-plugin
     , plutus-simple-model

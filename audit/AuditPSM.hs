@@ -1,7 +1,9 @@
 {-# LANGUAGE
      NumericUnderscores,
      LambdaCase,
-     RecordWildCards
+     RecordWildCards,
+     TemplateHaskell,
+     RankNTypes
 #-}
 
 module AuditPSM where
@@ -10,49 +12,138 @@ import Plutus.Model
 import Plutus.Model.Validator.V1
 import Canonical.Vesting
 import Plutus.V2.Ledger.Api (PubKeyHash)
-import Control.Monad (replicateM)
+import Control.Monad
 import Plutus.Model.Pretty
 import Test.Tasty
+import Control.Lens
+    ( (<&>), view, makeLenses, ReifiedLens(Lens), ReifiedLens', (&), Fold, folding, (^..), (^?) )
+import Control.Monad.Reader
+import qualified Data.Time.Clock.POSIX as Time
+import Plutus.V1.Ledger.Time (POSIXTime)
+import Plutus.V1.Ledger.Interval (from)
 
-vestingScript :: TypedValidator Input Action
-vestingScript = mkTypedValidator untypedValidator
+import Utils
+import Data.List (foldl')
+import Plutus.V1.Ledger.Time (POSIXTimeRange)
+import Plutus.V1.Ledger.Value (Value)
+import Plutus.Model.Mock.Stat (Stat)
 
-defaultConfig :: MockConfig
-defaultConfig = defaultAlonzo
+type Amount = Integer
 
-initChain :: Mock
-initChain = initMock defaultConfig $ adaValue 100_000
+logTx :: Tx -> Run ()
+logTx = logError . ppTransaction
 
-setupUsers :: Run [PubKeyHash]
-setupUsers = replicateM 10 $ newUser $ adaValue 10_000
+lock :: Mode Vesting
+            -> KnownUser
+            -> Input
+            -> AuditM ()
+lock mode user' input = withUser user' $ \usr -> lift $ do
+  let tx' :: Tx
+      tx' = payToScript vestingScript (mode input) totalValue
 
-runTestIO :: forall a. String -> Run a -> IO ()
-runTestIO nm = defaultMain .  testNoErrors (adaValue 100_000) defaultConfig nm
+      totalValue = mconcat $ amount <$> schedule input
 
-data Users = Users {
-   andrea :: !PubKeyHash,
-   borja  :: !PubKeyHash,
-   chase  :: !PubKeyHash,
-   drazen :: !PubKeyHash,
-   ellen  :: !PubKeyHash,
-   george :: !PubKeyHash,
-   las    :: !PubKeyHash,
-   magnus :: !PubKeyHash,
-   oskar  :: !PubKeyHash,
-   vlad   :: !PubKeyHash
-}
+  sp <- spend usr totalValue
 
-identifyUsers :: Run Users
-identifyUsers = setupUsers >>= \case
-  [a, b, c, d, e, g, l, m, o, v] -> pure $ Users a b c d e g l m o v
-  _                              -> error "boom!"
+  let tx = tx' <> userSpend sp
+
+  logTx tx
+
+  submitTx usr tx
+
+lock' = lock HashDatum
+
+multisignTx :: [PubKeyHash] -> Tx -> Run Tx
+multisignTx usrs tx = foldM (flip signTx) tx usrs
+
+payToKeys :: [PubKeyHash] -> Amount -> Tx
+payToKeys usrs amt = foldl' (\acc u -> payToKey u (adaValue amt) <> acc) mempty usrs
+
+type ToUser = Amount
+type ToScript = Amount
+type Signers = [KnownUser]
+
+unlock :: Mode Vesting -> KnownUser -> Signers  -> Input -> ToUser -> ToScript -> POSIXTimeRange -> AuditM ()
+unlock mode usr' signers' input toUser toScript iv =  do
+  redeemer <- disburse [usr']
+  signers  <- users signers'
+  beneficiary <- user usr'
+  lift $ do
+    [(ref,_)] <- utxoAt vestingScript
+    let tx' =  mconcat [ spendScript vestingScript ref redeemer input
+                       , payToScript vestingScript (mode input) (adaValue toScript)
+                       , payToKey beneficiary (adaValue toUser) ]
+    tx <- multisignTx signers =<< validateIn iv tx'
+    logTx tx
+    void $ sendTx tx
+
+
+unlock' :: KnownUser
+        -> Signers
+        -> Input
+        -> ToUser
+        -> ToScript
+        -> POSIXTimeRange
+        -> AuditM ()
+unlock' = unlock HashDatum
+
+simpleContract :: AuditM ()
+simpleContract = do
+  now <- lift currentTime
+
+  let deadline = now + seconds 100
+      amount = 100
+
+  input <- mkInput [drazen,chase] [adaPortion deadline amount]
+
+  lock' andrea input
+
+  lift $ waitUntil (deadline + seconds 200)
+
+  unlock' drazen [drazen,chase] input 99 1 (from $ deadline + seconds 200)
+
+
+
+
+
+
+
+{-
+unlockVesting :: Run ()
+unlockVesting = do
+  now   <- currentTime
+  user1 <- newUser (adaValue 100)
+
+  let input = Input [user1] [Portion (now + 100 * seconds 1) (adaValue 100)]
+
+  makeVestingInline input
+
+  waitUntil (now + 200 * seconds 1)
+
+  [(ref, _)] <- utxoAt vestingScript
+
+  let tx' :: Tx
+      tx' = mconcat [ spendScript vestingScript ref (Disburse [user1]) input
+                   , payToKey user1 (adaValue 99)
+                   , payToScript vestingScript (InlineDatum input) (adaValue 1)
+                   ]
+  tx <- validateIn (from (now + 200 * seconds 1)) tx'
+  void $ signTx user1 tx >>= sendTx
+
+
+
+makeSuccessfulVesting :: Run ()
+makeSuccessfulVesting = do
+  now   <- currentTime
+  user1 <- newUser (adaValue 100)
+  makeVestingInline (Input [user1] [Portion (now + 100 * seconds 1) (adaValue 100)])
 
 superSimpleTest :: Run ()
 superSimpleTest = do
   Users{..} <- identifyUsers
   now <- currentTime
   let amount = adaValue 100
-  spending <- spend andrea amount
+  spending <- spend (user andrea) amount
   let input = Input [drazen] [Portion (now + weeks 1) amount]
       lockFunds = payToScript vestingScript (HashDatum input) amount
                   <> userSpend spending
@@ -68,3 +159,4 @@ superSimpleTest = do
   logInfo $ ppTransaction lockFunds
   submitTx drazen unlockFunds
   logBalanceSheet
+-}
