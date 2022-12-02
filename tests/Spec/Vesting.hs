@@ -51,8 +51,8 @@ unlockVesting = do
 
   let tx' :: Tx
       tx' = mconcat [ spendScript vestingScript ref (Disburse [user1]) input
-                   , payToKey user1 (adaValue 99)
-                   , payToScript vestingScript (InlineDatum input) (adaValue 1)
+                    , payToKey user1 (adaValue 99)
+                    , payToScript vestingScript (InlineDatum input) (adaValue 1)
                    ]
   tx <- validateIn (from (now + 200 * oneSecond)) tx'
   void $ signTx user1 tx >>= sendTx

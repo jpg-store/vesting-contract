@@ -137,9 +137,9 @@ getOnlyInputValueOfThisScript vh outs =
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
-signedByAMajority _allKeys signingKeys
-  -- = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
-  = traceIfFalse "Failed at majority" (length signingKeys == 2)
+signedByAMajority allKeys signingKeys
+  = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
+  -- = traceIfFalse "Failed at majority" (length signingKeys == 2)
 -------------------------------------------------------------------------------
 -- Validator
 -------------------------------------------------------------------------------
