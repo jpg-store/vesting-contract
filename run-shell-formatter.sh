@@ -1,0 +1,2 @@
+shfmt -w ./scripts
+

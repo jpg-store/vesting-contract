@@ -29,32 +29,31 @@ nowSeconds="$(date +%s)"
 lovelaces=0
 
 for i in "$@"; do
-  timestamp=$(($nowSeconds+$i))
-  ARGS="$ARGS --portion $timestamp:1000000"
-  ARGS1="$ARGS1 --portion $timestamp:1000000"
-  lovelaces="$(($lovelaces + 1000000))"
+	timestamp=$(($nowSeconds + $i))
+	ARGS="$ARGS --portion $timestamp:1000000"
+	ARGS1="$ARGS1 --portion $timestamp:1000000"
+	lovelaces="$(($lovelaces + 1000000))"
 done
 
 echo $ARGS
 echo $ARGS1
 
-cabal run vesting-sc -- datum --output "$DATUM_FILE"  $ARGS
+cabal run vesting-sc -- datum --output "$DATUM_FILE" $ARGS
 
-cabal run vesting-sc -- datum --output "$DATUM_FILE1"  $ARGS1
+cabal run vesting-sc -- datum --output "$DATUM_FILE1" $ARGS1
 
 cabal run vesting-sc -- datum --output "$INVALID_DATUM_FILE" \
-  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt) \
-  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt) \
-  --portion $nowSeconds:1000000
+	--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt) \
+	--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt) \
+	--portion $nowSeconds:1000000
 
 $baseDir/hash-plutus.sh
 
 find $tempDir/$BLOCKCHAIN_PREFIX/datums -name "*.json" \
-  -exec sh -c 'cardano-cli transaction hash-script-data --script-data-file "$1" > "${1%.*}-hash.txt"' sh {} \;
-
+	-exec sh -c 'cardano-cli transaction hash-script-data --script-data-file "$1" > "${1%.*}-hash.txt"' sh {} \;
 
 $baseDir/core/lock-tx.sh \
-  $(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr) \
-  ~/$BLOCKCHAIN_PREFIX/benefactor.skey \
-  $(cat $DATUM_HASH_FILE) \
-  "$lovelaces lovelace"
+	$(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr) \
+	~/$BLOCKCHAIN_PREFIX/benefactor.skey \
+	$(cat $DATUM_HASH_FILE) \
+	"$lovelaces lovelace"
