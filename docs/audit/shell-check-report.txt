@@ -1,0 +1,1680 @@
+
+In ./scripts/wait/until-next-block.sh line 1:
+initialBlock=$(cardano-cli query tip $BLOCKCHAIN 2>/dev/null | jq .slot )
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+                                     ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+initialBlock=$(cardano-cli query tip "$BLOCKCHAIN" 2>/dev/null | jq .slot )
+
+
+In ./scripts/wait/until-next-block.sh line 6:
+  nextSlot=$(cardano-cli query tip $BLOCKCHAIN 2>/dev/null | jq .slot  )
+                                   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  nextSlot=$(cardano-cli query tip "$BLOCKCHAIN" 2>/dev/null | jq .slot  )
+
+
+In ./scripts/wait/until-next-block.sh line 8:
+  if [ $initialBlock == $nextSlot ]
+       ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                        ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  if [ "$initialBlock" == "$nextSlot" ]
+
+
+In ./scripts/wait/until-next-block.sh line 12:
+      seconds=$(($seconds+1))
+                 ^------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/wait/until-next-block.sh line 20:
+if [ $BLOCKCHAIN_PREFIX == "mainnet" ]; then
+     ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+if [ "$BLOCKCHAIN_PREFIX" == "mainnet" ]; then
+
+
+In ./scripts/wait/until-next-block.sh line 21:
+initialBlock=$(cardano-cli query tip $BLOCKCHAIN 2>/dev/null | jq .slot )
+                                     ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+initialBlock=$(cardano-cli query tip "$BLOCKCHAIN" 2>/dev/null | jq .slot )
+
+
+In ./scripts/wait/until-next-block.sh line 26:
+  nextSlot=$(cardano-cli query tip $BLOCKCHAIN 2>/dev/null | jq .slot  )
+                                   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  nextSlot=$(cardano-cli query tip "$BLOCKCHAIN" 2>/dev/null | jq .slot  )
+
+
+In ./scripts/wait/until-next-block.sh line 28:
+  if [ $initialBlock == $nextSlot ]
+       ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                        ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  if [ "$initialBlock" == "$nextSlot" ]
+
+
+In ./scripts/wait/until-next-block.sh line 32:
+      seconds=$(($seconds+1))
+                 ^------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/wait/sc.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/wait/sc.sh line 5:
+$thisDir/wait-until-next-block.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$thisDir"/wait-until-next-block.sh
+
+
+In ./scripts/wait/sc.sh line 6:
+$baseDir/query/sc.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/query/sc.sh
+
+
+In ./scripts/wait/seller.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/wait/seller.sh line 5:
+$thisDir/wait-until-next-block.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$thisDir"/wait-until-next-block.sh
+
+
+In ./scripts/wait/seller.sh line 6:
+$baseDir/query/seller.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/query/seller.sh
+
+
+In ./scripts/happy-path/unlock-tx.sh line 11:
+$baseDir/core/unlock-successfully-tx.sh \
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/core/unlock-successfully-tx.sh \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 12:
+  $(cat ~/$BLOCKCHAIN_PREFIX/beneficiary1.addr) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+          ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary1.addr) \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 13:
+  ~/$BLOCKCHAIN_PREFIX/beneficiary1.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/beneficiary1.skey \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 14:
+  ~/$BLOCKCHAIN_PREFIX/beneficiary2.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/beneficiary2.skey \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 15:
+  $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-updated-keys.json \
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-updated-keys.json \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 16:
+  $(cat $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-updated-keys-hash.txt) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+        ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                           ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-updated-keys-hash.txt) \
+
+
+In ./scripts/happy-path/unlock-tx.sh line 18:
+  $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                        ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"/disburse.json
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 11:
+$baseDir/core/unlock-first-successfully-tx.sh \
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/core/unlock-first-successfully-tx.sh \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 12:
+  $(cat ~/$BLOCKCHAIN_PREFIX/beneficiary.addr) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+          ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary.addr) \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 13:
+  ~/$BLOCKCHAIN_PREFIX/beneficiary.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/beneficiary.skey \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 14:
+  ~/$BLOCKCHAIN_PREFIX/beneficiary1.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/beneficiary1.skey \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 15:
+  $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting.json \
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting.json \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 16:
+  $(cat $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-hash.txt) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+        ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                           ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-hash.txt) \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 17:
+  $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-updated-keys.json \
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-updated-keys.json \
+
+
+In ./scripts/happy-path/unlock-first-tx.sh line 20:
+  $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                        ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"/disburse.json
+
+
+In ./scripts/happy-path/lock-tx.sh line 20:
+ARGS="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary-pkh.txt)"
+                            ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS="--beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 21:
+ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)"
+                                  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS="$ARGS --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary1-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 22:
+ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)"
+                                  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS="$ARGS --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary2-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 24:
+ARGS1="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)"
+                             ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                      ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS1="--beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary1-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 25:
+ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)"
+                                    ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                             ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS1="$ARGS1 --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary2-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 26:
+ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary3-pkh.txt)"
+                                    ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                             ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ARGS1="$ARGS1 --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary3-pkh.txt)"
+
+
+In ./scripts/happy-path/lock-tx.sh line 32:
+  timestamp=$(($nowSeconds+$i))
+               ^---------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+                           ^-- SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/happy-path/lock-tx.sh line 35:
+  lovelaces="$(($lovelaces + 1000000))"
+                ^--------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/happy-path/lock-tx.sh line 38:
+echo $ARGS
+     ^---^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+echo "$ARGS"
+
+
+In ./scripts/happy-path/lock-tx.sh line 39:
+echo $ARGS1
+     ^----^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+echo "$ARGS1"
+
+
+In ./scripts/happy-path/lock-tx.sh line 41:
+cabal run vesting-sc -- datum --output "$DATUM_FILE"  $ARGS
+                                                      ^---^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cabal run vesting-sc -- datum --output "$DATUM_FILE"  "$ARGS"
+
+
+In ./scripts/happy-path/lock-tx.sh line 43:
+cabal run vesting-sc -- datum --output "$DATUM_FILE1"  $ARGS1
+                                                       ^----^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cabal run vesting-sc -- datum --output "$DATUM_FILE1"  "$ARGS1"
+
+
+In ./scripts/happy-path/lock-tx.sh line 46:
+  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt) \
+                  ^-- SC2046 (warning): Quote this to prevent word splitting.
+                        ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary1-pkh.txt) \
+
+
+In ./scripts/happy-path/lock-tx.sh line 47:
+  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt) \
+                  ^-- SC2046 (warning): Quote this to prevent word splitting.
+                        ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --beneficiaries $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary2-pkh.txt) \
+
+
+In ./scripts/happy-path/lock-tx.sh line 48:
+  --portion $nowSeconds:1000000
+            ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --portion "$nowSeconds":1000000
+
+
+In ./scripts/happy-path/lock-tx.sh line 50:
+$baseDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/hash-plutus.sh
+
+
+In ./scripts/happy-path/lock-tx.sh line 52:
+find $tempDir/$BLOCKCHAIN_PREFIX/datums -name "*.json" \
+     ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+              ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+find "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums -name "*.json" \
+
+
+In ./scripts/happy-path/lock-tx.sh line 56:
+$baseDir/core/lock-tx.sh \
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/core/lock-tx.sh \
+
+
+In ./scripts/happy-path/lock-tx.sh line 57:
+  $(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+          ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat ~/"$BLOCKCHAIN_PREFIX"/benefactor.addr) \
+
+
+In ./scripts/happy-path/lock-tx.sh line 58:
+  ~/$BLOCKCHAIN_PREFIX/benefactor.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/benefactor.skey \
+
+
+In ./scripts/happy-path/lock-tx.sh line 59:
+  $(cat $DATUM_HASH_FILE) \
+  ^---------------------^ SC2046 (warning): Quote this to prevent word splitting.
+        ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat "$DATUM_HASH_FILE") \
+
+
+In ./scripts/generate-redeemers.sh line 1:
+set -eu
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/generate-redeemers.sh line 7:
+mkdir -p $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX
+         ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                  ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                               ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+mkdir -p "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"
+
+
+In ./scripts/generate-redeemers.sh line 9:
+beneficiary=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary-pkh.txt)
+^---------^ SC2034 (warning): beneficiary appears unused. Verify use (or export if used externally).
+                  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary=$(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary-pkh.txt)
+
+
+In ./scripts/generate-redeemers.sh line 10:
+beneficiary1=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)
+                   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary1=$(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary1-pkh.txt)
+
+
+In ./scripts/generate-redeemers.sh line 11:
+beneficiary2=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)
+                   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary2=$(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary2-pkh.txt)
+
+
+In ./scripts/generate-redeemers.sh line 12:
+beneficiary3=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary3-pkh.txt)
+                   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary3=$(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/beneficiary3-pkh.txt)
+
+
+In ./scripts/generate-redeemers.sh line 14:
+cat << EOF > $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
+             ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                      ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                   ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cat << EOF > "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"/disburse.json
+
+
+In ./scripts/query-protocol-parameters.sh line 4:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 18:
+scriptHash=$(cat $assetDir/$BLOCKCHAIN_PREFIX/vesting.addr)
+^--------^ SC2034 (warning): scriptHash appears unused. Verify use (or export if used externally).
+                 ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+scriptHash=$(cat "$assetDir"/"$BLOCKCHAIN_PREFIX"/vesting.addr)
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 20:
+$baseDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/hash-plutus.sh
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 23:
+utxoScript=$($baseDir/query/sc | grep $datumHash | cardano-cli-balance-fixer parse-as-utxo)
+             ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                      ^--------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+utxoScript=$("$baseDir"/query/sc | grep "$datumHash" | cardano-cli-balance-fixer parse-as-utxo)
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 25:
+currentSlot=$(cardano-cli query tip $BLOCKCHAIN | jq .slot)
+                                    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+currentSlot=$(cardano-cli query tip "$BLOCKCHAIN" | jq .slot)
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 27:
+nextTenSlots=$(($currentSlot+150))
+                ^----------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 29:
+changeOutput=$(cardano-cli-balance-fixer change --address $beneficiaryAddr $BLOCKCHAIN)
+                                                          ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                           ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+changeOutput=$(cardano-cli-balance-fixer change --address "$beneficiaryAddr" "$BLOCKCHAIN")
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 32:
+  extraOutput="+ $changeOutput"
+  ^---------^ SC2034 (warning): extraOutput appears unused. Verify use (or export if used externally).
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 38:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 39:
+    $(cardano-cli-balance-fixer input --address $beneficiaryAddr $BLOCKCHAIN ) \
+    ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                 ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    $(cardano-cli-balance-fixer input --address "$beneficiaryAddr" "$BLOCKCHAIN" ) \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 40:
+    --tx-in $utxoScript \
+            ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in "$utxoScript" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 41:
+    --tx-in-script-file $validatorFile \
+                        ^------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-script-file "$validatorFile" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 42:
+    --tx-in-datum-file $datumFile \
+                       ^--------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-datum-file "$datumFile" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 43:
+    --tx-in-redeemer-file $redeemerFile \
+                          ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-redeemer-file "$redeemerFile" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 44:
+    --required-signer $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --required-signer "$signingKey" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 45:
+    --required-signer $signingKey1 \
+                      ^----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --required-signer "$signingKey1" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 46:
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address $beneficiaryAddr $BLOCKCHAIN) \
+                       ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                                        ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                         ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address "$beneficiaryAddr" "$BLOCKCHAIN") \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 48:
+    --change-address $beneficiaryAddr \
+                     ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --change-address "$beneficiaryAddr" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 49:
+    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                   ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 50:
+    --invalid-before $startSlot\
+                     ^--------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --invalid-before "$startSlot"\
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 58:
+   --signing-key-file $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 59:
+   --signing-key-file $signingKey1 \
+                      ^----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey1" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 60:
+   $BLOCKCHAIN \
+   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   "$BLOCKCHAIN" \
+
+
+In ./scripts/core/unlock-successfully-tx.sh line 66:
+  $BLOCKCHAIN \
+  ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$BLOCKCHAIN" \
+
+
+In ./scripts/core/lock-tx.sh line 10:
+mkdir -p $tempDir
+         ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+mkdir -p "$tempDir"
+
+
+In ./scripts/core/lock-tx.sh line 11:
+$baseDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/hash-plutus.sh
+
+
+In ./scripts/core/lock-tx.sh line 13:
+validatorFile=$assetDir/$BLOCKCHAIN_PREFIX/vesting.plutus
+^-----------^ SC2034 (warning): validatorFile appears unused. Verify use (or export if used externally).
+
+
+In ./scripts/core/lock-tx.sh line 18:
+scriptHash=$(cat $assetDir/$BLOCKCHAIN_PREFIX/vesting.addr)
+                 ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+scriptHash=$(cat "$assetDir"/"$BLOCKCHAIN_PREFIX"/vesting.addr)
+
+
+In ./scripts/core/lock-tx.sh line 22:
+changeOutput=$(cardano-cli-balance-fixer change --address $benefactorAddress $BLOCKCHAIN -o "$output")
+                                                          ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                             ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+changeOutput=$(cardano-cli-balance-fixer change --address "$benefactorAddress" "$BLOCKCHAIN" -o "$output")
+
+
+In ./scripts/core/lock-tx.sh line 31:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/core/lock-tx.sh line 32:
+    $(cardano-cli-balance-fixer input --address $benefactorAddress $BLOCKCHAIN) \
+    ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    $(cardano-cli-balance-fixer input --address "$benefactorAddress" "$BLOCKCHAIN") \
+
+
+In ./scripts/core/lock-tx.sh line 34:
+    --tx-out-datum-hash $scriptDatumHash \
+                        ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-out-datum-hash "$scriptDatumHash" \
+
+
+In ./scripts/core/lock-tx.sh line 36:
+    --change-address $benefactorAddress \
+                     ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --change-address "$benefactorAddress" \
+
+
+In ./scripts/core/lock-tx.sh line 37:
+    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                   ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/core/lock-tx.sh line 38:
+    --out-file $bodyFile
+               ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --out-file "$bodyFile"
+
+
+In ./scripts/core/lock-tx.sh line 43:
+    --tx-body-file $bodyFile \
+                   ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-body-file "$bodyFile" \
+
+
+In ./scripts/core/lock-tx.sh line 44:
+    --signing-key-file $signingKey \
+                       ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --signing-key-file "$signingKey" \
+
+
+In ./scripts/core/lock-tx.sh line 45:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/core/lock-tx.sh line 46:
+    --out-file $outFile
+               ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --out-file "$outFile"
+
+
+In ./scripts/core/lock-tx.sh line 51:
+ $BLOCKCHAIN \
+ ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ "$BLOCKCHAIN" \
+
+
+In ./scripts/core/lock-tx.sh line 52:
+ --tx-file $outFile
+           ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ --tx-file "$outFile"
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 20:
+scriptHash=$(cat $assetDir/$BLOCKCHAIN_PREFIX/vesting.addr)
+                 ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+scriptHash=$(cat "$assetDir"/"$BLOCKCHAIN_PREFIX"/vesting.addr)
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 22:
+$baseDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/hash-plutus.sh
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 26:
+utxoScript=$($baseDir/query/sc | grep $oldDatumHash | cardano-cli-balance-fixer parse-as-utxo)
+             ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                      ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+utxoScript=$("$baseDir"/query/sc | grep "$oldDatumHash" | cardano-cli-balance-fixer parse-as-utxo)
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 28:
+currentSlot=$(cardano-cli query tip $BLOCKCHAIN | jq .slot)
+                                    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+currentSlot=$(cardano-cli query tip "$BLOCKCHAIN" | jq .slot)
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 30:
+nextTenSlots=$(($currentSlot+150))
+                ^----------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 32:
+changeOutput=$(cardano-cli-balance-fixer change --address $beneficiaryAddr $BLOCKCHAIN)
+                                                          ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                           ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+changeOutput=$(cardano-cli-balance-fixer change --address "$beneficiaryAddr" "$BLOCKCHAIN")
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 35:
+  extraOutput="+ $changeOutput"
+  ^---------^ SC2034 (warning): extraOutput appears unused. Verify use (or export if used externally).
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 41:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 42:
+    $(cardano-cli-balance-fixer input --address $beneficiaryAddr $BLOCKCHAIN ) \
+    ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                 ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    $(cardano-cli-balance-fixer input --address "$beneficiaryAddr" "$BLOCKCHAIN" ) \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 43:
+    --tx-in $utxoScript \
+            ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in "$utxoScript" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 44:
+    --tx-in-script-file $validatorFile \
+                        ^------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-script-file "$validatorFile" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 45:
+    --tx-in-datum-file $oldDatumFile \
+                       ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-datum-file "$oldDatumFile" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 46:
+    --tx-in-redeemer-file $redeemerFile \
+                          ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-redeemer-file "$redeemerFile" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 47:
+    --required-signer $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --required-signer "$signingKey" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 48:
+    --required-signer $signingKey1 \
+                      ^----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --required-signer "$signingKey1" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 49:
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address $beneficiaryAddr $BLOCKCHAIN) \
+                       ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                                        ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                         ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address "$beneficiaryAddr" "$BLOCKCHAIN") \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 51:
+    --tx-out-datum-embed-file $newDatum \
+                              ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-out-datum-embed-file "$newDatum" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 53:
+    --change-address $beneficiaryAddr \
+                     ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --change-address "$beneficiaryAddr" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 54:
+    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                   ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 55:
+    --invalid-before $startSlot\
+                     ^--------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --invalid-before "$startSlot"\
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 64:
+   --signing-key-file $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 65:
+   --signing-key-file $signingKey1 \
+                      ^----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey1" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 66:
+   $BLOCKCHAIN \
+   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   "$BLOCKCHAIN" \
+
+
+In ./scripts/core/unlock-first-successfully-tx.sh line 72:
+  $BLOCKCHAIN \
+  ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$BLOCKCHAIN" \
+
+
+In ./scripts/query/find-utxo.sh line 5:
+cardano-cli query utxo --address $(cat ~/$BLOCKCHAIN_PREFIX/$N.addr) $BLOCKCHAIN
+                                 ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                         ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                            ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                     ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cardano-cli query utxo --address $(cat ~/"$BLOCKCHAIN_PREFIX"/"$N".addr) "$BLOCKCHAIN"
+
+
+In ./scripts/wallets/make-wallet-and-pkh.sh line 3:
+./scripts/wallets/make-wallet.sh $1
+                                 ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+./scripts/wallets/make-wallet.sh "$1"
+
+
+In ./scripts/wallets/make-wallet-and-pkh.sh line 4:
+./scripts/wallets/make-pkh.sh $1
+                              ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+./scripts/wallets/make-pkh.sh "$1"
+
+
+In ./scripts/wallets/make-all-wallets.sh line 5:
+mkdir -p ~/$BLOCKCHAIN_PREFIX
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+mkdir -p ~/"$BLOCKCHAIN_PREFIX"
+
+
+In ./scripts/wallets/make-pkh.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/wallets/make-pkh.sh line 5:
+mkdir -p $tempDir/$BLOCKCHAIN_PREFIX/pkhs
+         ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                  ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+mkdir -p "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs
+
+
+In ./scripts/wallets/make-pkh.sh line 7:
+cardano-cli address key-hash --payment-verification-key-file ~/$BLOCKCHAIN_PREFIX/$1.vkey \
+                                                               ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                  ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cardano-cli address key-hash --payment-verification-key-file ~/"$BLOCKCHAIN_PREFIX"/"$1".vkey \
+
+
+In ./scripts/wallets/make-pkh.sh line 8:
+ > $tempDir/$BLOCKCHAIN_PREFIX/pkhs/$1-pkh.txt
+   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                    ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ > "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/"$1"-pkh.txt
+
+
+In ./scripts/wallets/make-wallet.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/wallets/make-wallet.sh line 3:
+if [ ! -f ~/$BLOCKCHAIN_PREFIX/$1.vkey  ]; then
+            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                               ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+if [ ! -f ~/"$BLOCKCHAIN_PREFIX"/"$1".vkey  ]; then
+
+
+In ./scripts/wallets/make-wallet.sh line 4:
+cardano-cli address key-gen --verification-key-file ~/$BLOCKCHAIN_PREFIX/$1.vkey --signing-key-file ~/$BLOCKCHAIN_PREFIX/$1.skey
+                                                      ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                         ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                                      ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                                                         ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cardano-cli address key-gen --verification-key-file ~/"$BLOCKCHAIN_PREFIX"/"$1".vkey --signing-key-file ~/"$BLOCKCHAIN_PREFIX"/"$1".skey
+
+
+In ./scripts/wallets/make-wallet.sh line 5:
+cardano-cli address build $BLOCKCHAIN --payment-verification-key-file ~/$BLOCKCHAIN_PREFIX/$1.vkey --out-file ~/$BLOCKCHAIN_PREFIX/$1.addr
+                          ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                        ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                           ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                                                ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                                                                   ^-- SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cardano-cli address build "$BLOCKCHAIN" --payment-verification-key-file ~/"$BLOCKCHAIN_PREFIX"/"$1".vkey --out-file ~/"$BLOCKCHAIN_PREFIX"/"$1".addr
+
+
+In ./scripts/hash-plutus.sh line 10:
+  --payment-script-file $assetDir/mainnet/vesting.plutus \
+                        ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --payment-script-file "$assetDir"/mainnet/vesting.plutus \
+
+
+In ./scripts/hash-plutus.sh line 12:
+  --out-file $assetDir/mainnet/vesting.addr
+             ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --out-file "$assetDir"/mainnet/vesting.addr
+
+
+In ./scripts/hash-plutus.sh line 15:
+  --payment-script-file $assetDir/testnet/vesting.plutus \
+                        ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --payment-script-file "$assetDir"/testnet/vesting.plutus \
+
+
+In ./scripts/hash-plutus.sh line 17:
+  --out-file $assetDir/testnet/vesting.addr
+             ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --out-file "$assetDir"/testnet/vesting.addr
+
+
+In ./scripts/hash-plutus.sh line 20:
+  --payment-script-file $assetDir/local-testnet/vesting.plutus \
+                        ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --payment-script-file "$assetDir"/local-testnet/vesting.plutus \
+
+
+In ./scripts/hash-plutus.sh line 22:
+  --out-file $assetDir/local-testnet/vesting.addr
+             ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --out-file "$assetDir"/local-testnet/vesting.addr
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 1:
+set -eu
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 6:
+$baseDir/generate-redeemers.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/generate-redeemers.sh
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 8:
+$baseDir/happy-path/lock-tx.sh 0 10 20
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/happy-path/lock-tx.sh 0 10 20
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 9:
+$baseDir/wait/until-next-block.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/wait/until-next-block.sh
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 47:
+$baseDir/wait/until-next-block.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/wait/until-next-block.sh
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 48:
+$baseDir/happy-path/unlock-first-tx.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/happy-path/unlock-first-tx.sh
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 51:
+$baseDir/wait/until-next-block.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/wait/until-next-block.sh
+
+
+In ./scripts/tests/lock-unlock-first-unlock.sh line 52:
+$baseDir/happy-path/unlock-tx.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/happy-path/unlock-tx.sh
+
+
+In ./scripts/compile.sh line 1:
+set -eu
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/compile.sh line 4:
+tempDir=$mainDir/temp
+^-----^ SC2034 (warning): tempDir appears unused. Verify use (or export if used externally).
+
+
+In ./scripts/compile.sh line 7:
+cd $mainDir
+   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+cd "$mainDir"
+
+
+In ./scripts/compile.sh line 13:
+$thisDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$thisDir"/hash-plutus.sh
+
+
+In ./scripts/scratch/setup-wallets.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/scratch/setup-wallets.sh line 7:
+benefactorAddr=$(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr)
+                       ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+benefactorAddr=$(cat ~/"$BLOCKCHAIN_PREFIX"/benefactor.addr)
+
+
+In ./scripts/scratch/setup-wallets.sh line 8:
+beneficiaryAddr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary.addr)
+                        ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiaryAddr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary.addr)
+
+
+In ./scripts/scratch/setup-wallets.sh line 9:
+beneficiary1Addr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary1.addr)
+                         ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary1Addr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary1.addr)
+
+
+In ./scripts/scratch/setup-wallets.sh line 10:
+beneficiary2Addr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary2.addr)
+                         ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary2Addr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary2.addr)
+
+
+In ./scripts/scratch/setup-wallets.sh line 11:
+beneficiary3Addr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary3.addr)
+                         ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiary3Addr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary3.addr)
+
+
+In ./scripts/scratch/setup-wallets.sh line 15:
+  $BLOCKCHAIN \
+  ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$BLOCKCHAIN" \
+
+
+In ./scripts/scratch/setup-wallets.sh line 16:
+  $(cardano-cli-balance-fixer input --address $senderAddr $BLOCKCHAIN ) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                              ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                          ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cardano-cli-balance-fixer input --address "$senderAddr" "$BLOCKCHAIN" ) \
+
+
+In ./scripts/scratch/setup-wallets.sh line 22:
+  --change-address $senderAddr \
+                   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --change-address "$senderAddr" \
+
+
+In ./scripts/scratch/setup-wallets.sh line 23:
+  --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/scratch/setup-wallets.sh line 31:
+   $BLOCKCHAIN \
+   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   "$BLOCKCHAIN" \
+
+
+In ./scripts/scratch/setup-wallets.sh line 37:
+ $BLOCKCHAIN \
+ ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ "$BLOCKCHAIN" \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 1:
+set -eux
+^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 6:
+senderAddr=$(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr)
+                   ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+senderAddr=$(cat ~/"$BLOCKCHAIN_PREFIX"/benefactor.addr)
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 7:
+receiverAddr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary.addr)
+                     ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+receiverAddr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary.addr)
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 11:
+  $BLOCKCHAIN \
+  ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$BLOCKCHAIN" \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 14:
+  --change-address $senderAddr \
+                   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --change-address "$senderAddr" \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 15:
+  --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 22:
+   --signing-key-file $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey" \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 23:
+   $BLOCKCHAIN \
+   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   "$BLOCKCHAIN" \
+
+
+In ./scripts/scratch/benefactor-to-benificiary.sh line 29:
+ $BLOCKCHAIN \
+ ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+ "$BLOCKCHAIN" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 12:
+beneficiaryAddr=$(cat ~/$BLOCKCHAIN_PREFIX/beneficiary.addr) \
+                        ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+beneficiaryAddr=$(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary.addr) \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 15:
+oldDatumHash=$(cat $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-hash.txt) \
+                   ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                            ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                      ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+oldDatumHash=$(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-hash.txt) \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 22:
+scriptHash=$(cat $assetDir/$BLOCKCHAIN_PREFIX/vesting.addr)
+                 ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+scriptHash=$(cat "$assetDir"/"$BLOCKCHAIN_PREFIX"/vesting.addr)
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 24:
+$baseDir/hash-plutus.sh
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/hash-plutus.sh
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 28:
+utxoScript=$($baseDir/query/sc | grep $oldDatumHash | cardano-cli-balance-fixer parse-as-utxo)
+             ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                      ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+utxoScript=$("$baseDir"/query/sc | grep "$oldDatumHash" | cardano-cli-balance-fixer parse-as-utxo)
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 30:
+currentSlot=$(cardano-cli query tip $BLOCKCHAIN | jq .slot)
+                                    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+currentSlot=$(cardano-cli query tip "$BLOCKCHAIN" | jq .slot)
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 32:
+nextTenSlots=$(($currentSlot+150))
+                ^----------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 34:
+changeOutput=$(cardano-cli-balance-fixer change --address $beneficiaryAddr $BLOCKCHAIN)
+                                                          ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                           ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+changeOutput=$(cardano-cli-balance-fixer change --address "$beneficiaryAddr" "$BLOCKCHAIN")
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 37:
+  extraOutput="+ $changeOutput"
+  ^---------^ SC2034 (warning): extraOutput appears unused. Verify use (or export if used externally).
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 43:
+    $BLOCKCHAIN \
+    ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    "$BLOCKCHAIN" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 44:
+    $(cardano-cli-balance-fixer input --address $beneficiaryAddr $BLOCKCHAIN ) \
+    ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                 ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    $(cardano-cli-balance-fixer input --address "$beneficiaryAddr" "$BLOCKCHAIN" ) \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 45:
+    --tx-in $utxoScript \
+            ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in "$utxoScript" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 46:
+    --tx-in-script-file $validatorFile \
+                        ^------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-script-file "$validatorFile" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 47:
+    --tx-in-datum-file $oldDatumFile \
+                       ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-datum-file "$oldDatumFile" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 48:
+    --tx-in-redeemer-file $redeemerFile \
+                          ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-redeemer-file "$redeemerFile" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 49:
+    --required-signer $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --required-signer "$signingKey" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 50:
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address $beneficiaryAddr $BLOCKCHAIN) \
+                       ^-- SC2046 (warning): Quote this to prevent word splitting.
+                                                                        ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                                                                         ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-in-collateral $(cardano-cli-balance-fixer collateral --address "$beneficiaryAddr" "$BLOCKCHAIN") \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 52:
+    --tx-out-datum-embed-file $newDatum \
+                              ^-------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --tx-out-datum-embed-file "$newDatum" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 54:
+    --change-address $beneficiaryAddr \
+                     ^--------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --change-address "$beneficiaryAddr" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 55:
+    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+                                   ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --protocol-params-file scripts/"$BLOCKCHAIN_PREFIX"/protocol-parameters.json \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 56:
+    --invalid-before $startSlot\
+                     ^--------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+    --invalid-before "$startSlot"\
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 65:
+   --signing-key-file $signingKey \
+                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   --signing-key-file "$signingKey" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 66:
+   $BLOCKCHAIN \
+   ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+   "$BLOCKCHAIN" \
+
+
+In ./scripts/failure-cases/unlock-first-to-few-signers-tx.sh line 72:
+  $BLOCKCHAIN \
+  ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$BLOCKCHAIN" \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 11:
+$baseDir/core/unlock-first-successfully-tx.sh \
+^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+"$baseDir"/core/unlock-first-successfully-tx.sh \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 12:
+  $(cat ~/$BLOCKCHAIN_PREFIX/beneficiary.addr) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+          ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat ~/"$BLOCKCHAIN_PREFIX"/beneficiary.addr) \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 13:
+  ~/$BLOCKCHAIN_PREFIX/beneficiary.skey \
+    ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  ~/"$BLOCKCHAIN_PREFIX"/beneficiary.skey \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 14:
+  $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting.json \
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting.json \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 15:
+  $(cat $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/vesting-hash.txt) \
+  ^-- SC2046 (warning): Quote this to prevent word splitting.
+        ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                 ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                           ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  $(cat "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/vesting-hash.txt) \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 16:
+  $tempDir/$BLOCKCHAIN_PREFIX/datums/$DATUM_PREFIX/invalid.json \
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                     ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/datums/"$DATUM_PREFIX"/invalid.json \
+
+
+In ./scripts/failure-cases/unlock-first-bad-datum-tx.sh line 19:
+  $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
+  ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+           ^----------------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+                                        ^-----------^ SC2086 (info): Double quote to prevent globbing and word splitting.
+
+Did you mean: 
+  "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"/disburse.json
+
+For more information:
+  https://www.shellcheck.net/wiki/SC2148 -- Tips depend on target shell and y...
+  https://www.shellcheck.net/wiki/SC2034 -- beneficiary appears unused. Verif...
+  https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...
