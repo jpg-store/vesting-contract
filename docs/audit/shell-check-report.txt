@@ -1,7 +1,6 @@
 
 In ./scripts/wait/until-next-block.sh line 1:
 initialBlock=$(cardano-cli query tip $BLOCKCHAIN 2>/dev/null | jq .slot )
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
                                      ^---------^ SC2086 (info): Double quote to prevent globbing and word splitting.
 
 Did you mean: 
@@ -68,11 +67,6 @@ In ./scripts/wait/until-next-block.sh line 32:
                  ^------^ SC2004 (style): $/${} is unnecessary on arithmetic variables.
 
 
-In ./scripts/wait/sc.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
-
-
 In ./scripts/wait/sc.sh line 5:
 $thisDir/wait-until-next-block.sh
 ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
@@ -87,11 +81,6 @@ $baseDir/query/sc.sh
 
 Did you mean: 
 "$baseDir"/query/sc.sh
-
-
-In ./scripts/wait/seller.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
 
 
 In ./scripts/wait/seller.sh line 5:
@@ -422,11 +411,6 @@ In ./scripts/happy-path/lock-tx.sh line 59:
 
 Did you mean: 
   $(cat "$DATUM_HASH_FILE") \
-
-
-In ./scripts/generate-redeemers.sh line 1:
-set -eu
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
 
 
 In ./scripts/generate-redeemers.sh line 7:
@@ -1045,11 +1029,6 @@ Did you mean:
 mkdir -p ~/"$BLOCKCHAIN_PREFIX"
 
 
-In ./scripts/wallets/make-pkh.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
-
-
 In ./scripts/wallets/make-pkh.sh line 5:
 mkdir -p $tempDir/$BLOCKCHAIN_PREFIX/pkhs
          ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
@@ -1076,11 +1055,6 @@ In ./scripts/wallets/make-pkh.sh line 8:
 
 Did you mean: 
  > "$tempDir"/"$BLOCKCHAIN_PREFIX"/pkhs/"$1"-pkh.txt
-
-
-In ./scripts/wallets/make-wallet.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
 
 
 In ./scripts/wallets/make-wallet.sh line 3:
@@ -1163,11 +1137,6 @@ Did you mean:
   --out-file "$assetDir"/local-testnet/vesting.addr
 
 
-In ./scripts/tests/lock-unlock-first-unlock.sh line 1:
-set -eu
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
-
-
 In ./scripts/tests/lock-unlock-first-unlock.sh line 6:
 $baseDir/generate-redeemers.sh
 ^------^ SC2086 (info): Double quote to prevent globbing and word splitting.
@@ -1224,11 +1193,6 @@ Did you mean:
 "$baseDir"/happy-path/unlock-tx.sh
 
 
-In ./scripts/compile.sh line 1:
-set -eu
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
-
-
 In ./scripts/compile.sh line 4:
 tempDir=$mainDir/temp
 ^-----^ SC2034 (warning): tempDir appears unused. Verify use (or export if used externally).
@@ -1248,11 +1212,6 @@ $thisDir/hash-plutus.sh
 
 Did you mean: 
 "$thisDir"/hash-plutus.sh
-
-
-In ./scripts/scratch/setup-wallets.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
 
 
 In ./scripts/scratch/setup-wallets.sh line 7:
@@ -1343,11 +1302,6 @@ In ./scripts/scratch/setup-wallets.sh line 37:
 
 Did you mean: 
  "$BLOCKCHAIN" \
-
-
-In ./scripts/scratch/benefactor-to-benificiary.sh line 1:
-set -eux
-^-- SC2148 (error): Tips depend on target shell and yours is unknown. Add a shebang or a 'shell' directive.
 
 
 In ./scripts/scratch/benefactor-to-benificiary.sh line 6:
@@ -1675,6 +1629,6 @@ Did you mean:
   "$tempDir"/"$BLOCKCHAIN_PREFIX"/redeemers/"$DATUM_PREFIX"/disburse.json
 
 For more information:
-  https://www.shellcheck.net/wiki/SC2148 -- Tips depend on target shell and y...
   https://www.shellcheck.net/wiki/SC2034 -- beneficiary appears unused. Verif...
   https://www.shellcheck.net/wiki/SC2046 -- Quote this to prevent word splitt...
+  https://www.shellcheck.net/wiki/SC2086 -- Double quote to prevent globbing ...
