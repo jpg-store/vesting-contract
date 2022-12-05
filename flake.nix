@@ -1,6 +1,7 @@
 {
   description = "vesting contract";
-  nixConfig.bash-prompt = "\\[\\e[0m\\][\\[\\e[0;2m\\]Audit \\[\\e[0;93m\\]\\w\\[\\e[0m\\]]\\[\\e[0m\\]$ \\[\\e[0m\\]";
+  nixConfig.bash-prompt =
+    "\\[\\e[0m\\][\\[\\e[0;2m\\]Audit \\[\\e[0;93m\\]\\w\\[\\e[0m\\]]\\[\\e[0m\\]$ \\[\\e[0m\\]";
 
   inputs = {
     nixpkgs.follows = "plutip/nixpkgs";
@@ -8,7 +9,8 @@
 
     plutip.url = "github:mlabs-haskell/plutip";
     plutonomy = {
-      url = "github:well-typed/plutonomy/6c01302ba8cf3be4f71617e106cd5ef7ed10fc63";
+      url =
+        "github:well-typed/plutonomy/6c01302ba8cf3be4f71617e106cd5ef7ed10fc63";
       flake = false;
     };
   };
@@ -18,11 +20,15 @@
       defaultSystems = [ "x86_64-linux" "x86_64-darwin" ];
       perSystem = nixpkgs.lib.genAttrs defaultSystems;
 
-      nixpkgsFor = system: import nixpkgs {
-        inherit system;
-        overlays = [ haskell-nix.overlay (import "${plutip.inputs.iohk-nix}/overlays/crypto") ];
-        inherit (haskell-nix) config;
-      };
+      nixpkgsFor = system:
+        import nixpkgs {
+          inherit system;
+          overlays = [
+            haskell-nix.overlay
+            (import "${plutip.inputs.iohk-nix}/overlays/crypto")
+          ];
+          inherit (haskell-nix) config;
+        };
       nixpkgsFor' = system: import nixpkgs { inherit system; };
 
       deferPluginErrors = true;
@@ -59,9 +65,14 @@
                 # We use the ones from Nixpkgs, since they are cached reliably.
                 # Eventually we will probably want to build these with haskell.nix.
                 nativeBuildInputs = [
+                  # shell utils 
                   pkgs'.shellcheck
-                  pkgs'.cabal-install
+                  pkgs'.shfmt
                   pkgs'.fd
+                  pkgs'.nixfmt
+
+                  # haskell utiles 
+                  pkgs'.cabal-install
                   pkgs'.hlint
 
                   project.hsPkgs.cardano-cli.components.exes.cardano-cli
@@ -73,11 +84,9 @@
                 additional = ps: [ ps.plutip ps.plutus-tx-plugin ps.plutonomy ];
               };
             };
-          in
-          project;
+          in project;
       };
-    in
-    {
+    in {
       inherit nixpkgsFor;
 
       audit = {
@@ -85,13 +94,10 @@
         flake = perSystem (system: (audit.projectFor system).flake { });
       };
 
-      packages = perSystem (system:
-        self.audit.flake.${system}.packages
-      );
+      packages = perSystem (system: self.audit.flake.${system}.packages);
 
-      devShells = perSystem (system: {
-        audit = self.audit.flake.${system}.devShell;
-      });
+      devShells =
+        perSystem (system: { audit = self.audit.flake.${system}.devShell; });
     };
 }
 

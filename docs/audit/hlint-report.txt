@@ -1,4 +1,4 @@
-app/Main.hs:(64,1)-(67,19): Suggestion: Use newtype instead of data
+app/Main.hs:(66,1)-(69,20): Suggestion: Use newtype instead of data
 Found:
   data WriteOptions
     = WriteOptions {woOutput :: FilePath}
@@ -9,7 +9,7 @@ Perhaps:
     deriving Generic
 Note: decreases laziness
 
-app/Main.hs:153:5-51: Suggestion: Redundant bracket
+app/Main.hs:159:7-53: Suggestion: Redundant bracket
 Found:
   (scriptDataToJson ScriptDataJsonDetailedSchema)
     . Shelley.fromPlutusData . toData
@@ -17,14 +17,14 @@ Perhaps:
   scriptDataToJson ScriptDataJsonDetailedSchema
     . Shelley.fromPlutusData . toData
 
-src/Canonical/Vesting.hs:46:1-35: Suggestion: Use newtype instead of data
+src/Canonical/Vesting.hs:47:1-35: Suggestion: Use newtype instead of data
 Found:
   data Action = Disburse [PubKeyHash]
 Perhaps:
   newtype Action = Disburse [PubKeyHash]
 Note: decreases laziness
 
-src/Canonical/Vesting.hs:(184,23)-(206,113): Warning: Redundant if
+src/Canonical/Vesting.hs:(187,17)-(207,127): Warning: Redundant if
 Found:
   if isZero unvested then
       True
@@ -93,4 +93,10 @@ Perhaps:
                 "Not enough value remains locked to fulfill vesting schedule"
                 (locked `geq` unvested)))
 
-4 hints
+src/Canonical/Vesting.hs:233:10-38: Suggestion: Redundant bracket
+Found:
+  mkValidatorScript $$ (compile [|| wrapValidator ||])
+Perhaps:
+  mkValidatorScript $$ compile [|| wrapValidator ||]
+
+5 hints

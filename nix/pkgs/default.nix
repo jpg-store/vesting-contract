@@ -1,8 +1,4 @@
-{ pkgs
-, sources
-, plutus
-, haskell-nix
-}:
+{ pkgs, sources, plutus, haskell-nix }:
 let
   gitignore-nix = pkgs.callPackage plutus."gitignore.nix" { };
 
@@ -23,7 +19,7 @@ let
   haskell-language-server = plutus.plutus-apps.haskell-language-server;
 
   cardano-repo-tool = plutus.plutus-apps.cardano-repo-tool;
-in
-{
-  inherit haskell hlint cabal-install stylish-haskell haskell-language-server cardano-repo-tool;
+in {
+  inherit haskell hlint cabal-install stylish-haskell haskell-language-server
+    cardano-repo-tool;
 }

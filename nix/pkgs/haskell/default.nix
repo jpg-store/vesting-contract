@@ -1,24 +1,14 @@
-{ lib
-, haskell-nix
-, gitignore-nix
-, sources
-, compiler-nix-name
-, libsodium-vrf
-}:
+{ lib, haskell-nix, gitignore-nix, sources, compiler-nix-name, libsodium-vrf }:
 let
   # The Hackage index-state from cabal.project
-  index-state =
-    let
-      parseIndexState = rawCabalProject:
-        let
-          indexState = lib.lists.concatLists (
-            lib.lists.filter (l: l != null)
-              (map (l: builtins.match "^index-state: *(.*)" l)
-                (lib.splitString "\n" rawCabalProject)));
-        in
-        lib.lists.head (indexState ++ [ null ]);
-    in
-    parseIndexState (builtins.readFile ../../../cabal.project);
+  index-state = let
+    parseIndexState = rawCabalProject:
+      let
+        indexState = lib.lists.concatLists (lib.lists.filter (l: l != null)
+          (map (l: builtins.match "^index-state: *(.*)" l)
+            (lib.splitString "\n" rawCabalProject)));
+      in lib.lists.head (indexState ++ [ null ]);
+  in parseIndexState (builtins.readFile ../../../cabal.project);
 
   # The haskell project created by haskell-nix.cabalProject'
   project = import ./haskell.nix {
@@ -30,7 +20,4 @@ let
 
   # Just the packages in the project
   projectPackages = haskell-nix.haskellLib.selectProjectPackages packages;
-in
-rec {
-  inherit project projectPackages packages;
-}
+in rec { inherit project projectPackages packages; }

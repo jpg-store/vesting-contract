@@ -22,34 +22,34 @@ outFile=$tempDir/lock-tx.01
 changeOutput=$(cardano-cli-balance-fixer change --address $benefactorAddress $BLOCKCHAIN -o "$output")
 
 extraOutput=""
-if [ "$changeOutput" != "" ];then
-  extraOutput="+ $changeOutput"
+if [ "$changeOutput" != "" ]; then
+	extraOutput="+ $changeOutput"
 fi
 
 cardano-cli transaction build \
-    --babbage-era \
-    $BLOCKCHAIN \
-    $(cardano-cli-balance-fixer input --address $benefactorAddress $BLOCKCHAIN) \
-    --tx-out "$scriptHash + $output" \
-    --tx-out-datum-hash $scriptDatumHash \
-    --tx-out "$benefactorAddress + 1744798 lovelace $extraOutput" \
-    --change-address $benefactorAddress \
-    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
-    --out-file $bodyFile
+	--babbage-era \
+	$BLOCKCHAIN \
+	$(cardano-cli-balance-fixer input --address $benefactorAddress $BLOCKCHAIN) \
+	--tx-out "$scriptHash + $output" \
+	--tx-out-datum-hash $scriptDatumHash \
+	--tx-out "$benefactorAddress + 1744798 lovelace $extraOutput" \
+	--change-address $benefactorAddress \
+	--protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+	--out-file $bodyFile
 
 echo "saved transaction to $bodyFile"
 
 cardano-cli transaction sign \
-    --tx-body-file $bodyFile \
-    --signing-key-file $signingKey \
-    $BLOCKCHAIN \
-    --out-file $outFile
+	--tx-body-file $bodyFile \
+	--signing-key-file $signingKey \
+	$BLOCKCHAIN \
+	--out-file $outFile
 
 echo "signed transaction and saved as $outFile"
 
 cardano-cli transaction submit \
- $BLOCKCHAIN \
- --tx-file $outFile
+	$BLOCKCHAIN \
+	--tx-file $outFile
 
 echo "submitted transaction"
 

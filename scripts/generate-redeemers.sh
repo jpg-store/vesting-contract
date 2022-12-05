@@ -11,7 +11,7 @@ beneficiary1=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)
 beneficiary2=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)
 beneficiary3=$(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary3-pkh.txt)
 
-cat << EOF > $tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
+cat <<EOF >$tempDir/$BLOCKCHAIN_PREFIX/redeemers/$DATUM_PREFIX/disburse.json
 {
   "constructor": 0,
   "fields": [
