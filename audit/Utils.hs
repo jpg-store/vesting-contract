@@ -9,7 +9,7 @@
 module Utils where
 
 import Plutus.Model
-import Plutus.Model.Validator.V1
+import Plutus.Model.Validator.V2
 import Canonical.Vesting
 import Plutus.V2.Ledger.Api (PubKeyHash)
 import Control.Monad (replicateM)
@@ -25,7 +25,7 @@ import Plutus.V1.Ledger.Interval (from)
 
 {- PSM Mock Blockchain Setup -}
 defaultConfig :: MockConfig
-defaultConfig = defaultAlonzo
+defaultConfig = defaultBabbage
 
 setupUsers :: Run [PubKeyHash]
 setupUsers = replicateM 10 $ newUser $ adaValue 10_000
