@@ -33,6 +33,7 @@ import PlutusTx
 import PlutusTx.Prelude hiding (Semigroup (..), unless)
 import Canonical.Shared
 import qualified Plutonomy
+import qualified Prelude as P
 #include "DebugUtilities.h"
 
 -------------------------------------------------------------------------------
@@ -41,16 +42,17 @@ import qualified Plutonomy
 data Portion = Portion
   { deadline :: POSIXTime
   , amount :: Value
-  }
+  } deriving (P.Show, P.Eq)
 
 type Schedule = [Portion]
 
 data Input = Input
   { beneficiaries :: [PubKeyHash]
   , schedule :: Schedule
-  }
+  } deriving (P.Show, P.Eq)
 
 data Action = Disburse [PubKeyHash]
+              deriving (P.Show, P.Eq)
 -------------------------------------------------------------------------------
 -- Boilerplate
 -------------------------------------------------------------------------------
@@ -270,7 +272,7 @@ vestingValidator :: Validator
 vestingValidator = TypedValidators.validatorScript typedValidator
 
 vestingAddr :: Address
-vestingAddr = scriptHashAddress $ ScriptUtils.validatorHash validator
+vestingAddr = scriptHashAddress $ ScriptUtils.validatorHash vestingValidator
 
 vestingValHash :: ValidatorHash
 vestingValHash = ScriptUtils.validatorHash vestingValidator 
