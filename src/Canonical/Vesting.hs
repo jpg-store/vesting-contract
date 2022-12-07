@@ -7,6 +7,11 @@ module Canonical.Vesting
   , Action(..)
   , Portion(..)
   , Schedule
+  -- * Required for testing the vesting contract
+  , Vesting
+  , vestingValidator
+  , vestingAddr
+  , vestingValHash
   ) where
 
 import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV2)
@@ -22,6 +27,8 @@ import           Plutus.V1.Ledger.Crypto
 import           Plutus.V2.Ledger.Tx
 import           Plutus.V1.Ledger.Time
 import           Plutus.V1.Ledger.Interval
+import qualified Plutus.Script.Utils.V2.Typed.Scripts.Validators as TypedValidators
+import qualified Plutus.Script.Utils.V2.Scripts as ScriptUtils
 import PlutusTx
 import PlutusTx.Prelude hiding (Semigroup (..), unless)
 import Canonical.Shared
@@ -134,9 +141,8 @@ getOnlyInputValueOfThisScript vh outs =
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
-signedByAMajority _allKeys signingKeys
-  -- = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
-  = traceIfFalse "Failed at majority" (length signingKeys == 2)
+signedByAMajority allKeys signingKeys
+  = length (filter (`elem` allKeys) signingKeys) > (length allKeys `divide` 2)
 -------------------------------------------------------------------------------
 -- Validator
 -------------------------------------------------------------------------------
@@ -243,3 +249,28 @@ vesting
   $ serialise
     validator
 
+
+---
+
+data Vesting
+
+instance TypedValidators.ValidatorTypes Vesting where
+  type DatumType Vesting = Input
+  type RedeemerType Vesting = Action
+
+typedValidator :: TypedValidators.TypedValidator Vesting
+typedValidator =
+  TypedValidators.mkTypedValidator @Vesting
+    $$(PlutusTx.compile [||mkValidator||])
+    $$(PlutusTx.compile [||go||])
+  where
+    go = TypedValidators.mkUntypedValidator @Input @Action
+
+vestingValidator :: Validator
+vestingValidator = TypedValidators.validatorScript typedValidator
+
+vestingAddr :: Address
+vestingAddr = scriptHashAddress $ ScriptUtils.validatorHash validator
+
+vestingValHash :: ValidatorHash
+vestingValHash = ScriptUtils.validatorHash vestingValidator 

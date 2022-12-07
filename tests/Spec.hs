@@ -2,7 +2,9 @@
 {-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Main (main) where
 
-import Spec.Vesting (mkVesting)
+import Spec.Vesting (mkVesting, makeAndUnlockVesting)
+import Canonical.Vesting (Input(Input))
+import Control.Monad (void)
 import qualified Canonical.Vesting as Vesting
 import Data.Default (def)
 import Test.Plutip.Contract (
@@ -35,11 +37,16 @@ tests =
           "Make successful vesting"
           (withCollateral $ initAda [wallet0] <> initAda [wallet1])
           (do
-            withContract $ \[w2pkh] -> do
-                currentTime <- Contract.currentTime
-                mkVesting (Vesting.Input
-                              [Ledger.unPaymentPubKeyHash w2pkh]
-                              [Vesting.Portion currentTime fundsToVest])
+            withContract $ \[_w1pkh] -> do
+                ppkh <- Contract.ownFirstPaymentPubKeyHash
+                (_, startTime) <- Contract.currentNodeClientTimeRange
+
+                let vestingDatum = Input [Ledger.unPaymentPubKeyHash ppkh] [Vesting.Portion startTime fundsToVest]
+
+                void $ mkVesting vestingDatum
+
+                makeAndUnlockVesting vestingDatum
+
           )
           [shouldSucceed]
 

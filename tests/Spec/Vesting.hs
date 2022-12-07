@@ -1,54 +1,63 @@
+{-# LANGUAGE ImportQualifiedPost #-}
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Spec.Vesting
   ( mkVesting
-  , toDatum
-  , toRedeemer
-  , getUtxos
+  , makeAndUnlockVesting
   )
   where
 
+import Data.Void (Void)
 import Data.Text (Text)
-import qualified Data.List.NonEmpty as NonEmpty
-
-import qualified Ledger.Scripts  as Scripts
+import Data.Map qualified as Map
+import Control.Monad (void)
+import Ledger (TxId, Language(PlutusV2), Versioned(Versioned))
+import qualified Ledger
 import Plutus.PAB.Effects.Contract.Builtin (EmptySchema)
-import qualified Canonical.Vesting as Vesting
-import qualified Ledger.Constraints  as Constraints
-import qualified Plutus.Contract  as Contract
-import Plutus.Contract (Contract, awaitTxConfirmed, submitTx)
-import Ledger (
-  TxId,
-  getCardanoTxId,
-  Datum(Datum),
-  Redeemer(Redeemer),
-  ValidatorHash, Value, TxOutRef, ChainIndexTxOut
- )
-import PlutusTx (toBuiltinData, ToData)
-import Data.Map (Map)
+import Plutus.Contract qualified as Contract
+import Canonical.Vesting qualified as Vesting
+import Canonical.Vesting (Vesting ,vestingValHash, vestingAddr, vestingValidator)
+import Ledger.Constraints qualified as Constraints
+import Plutus.Contract (Contract, awaitTxConfirmed)
+import Spec.Utils (toDatum, toRedeemer, totalValueInInput)
+import BotPlutusInterface.Constraints (submitBpiTxConstraintsWith, mustValidateInFixed)
 
 mkVesting :: Vesting.Input -> Contract () EmptySchema Text TxId
 mkVesting vestingDatum = do
 
   let
       txSK :: Constraints.TxConstraints i o
-      txSK = Constraints.mustPayToOtherScript
+      txSK = Constraints.mustPayToOtherScriptWithInlineDatum
                vestingValHash
                (toDatum vestingDatum)
-               (mconcat $ Vesting.amount <$> Vesting.schedule vestingDatum)
+               (totalValueInInput vestingDatum)
 
-  tx <- submitTx txSK
-  awaitTxConfirmed $ getCardanoTxId tx
-  return (getCardanoTxId tx)
+  txId <- submitBpiTxConstraintsWith @Void mempty txSK []
+  awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  return (Ledger.getCardanoTxId txId)
 
-toDatum :: forall a. ToData a => a -> Datum
-toDatum = Datum . toBuiltinData
+makeAndUnlockVesting :: Vesting.Input -> Contract () EmptySchema Text TxId
+makeAndUnlockVesting vestingDatum = do
 
-toRedeemer :: forall a. ToData a => a -> Redeemer
-toRedeemer = Redeemer . toBuiltinData
+  void $ Contract.waitNSlots 10
 
-vestingValHash :: ValidatorHash
-vestingValHash = Scripts.validatorHash Vesting.validator
+  ppkh <- Contract.ownFirstPaymentPubKeyHash
+  utxos <- Map.toList <$> Contract.utxosAt vestingAddr
+  (_, startTime) <- Contract.currentNodeClientTimeRange
 
-getUtxos :: Contract [Value] EmptySchema Text (Map TxOutRef ChainIndexTxOut)
-getUtxos = do
-  addr <- NonEmpty.head <$> Contract.ownAddresses
-  Contract.utxosAt addr
+  let [(oref,_)] = utxos
+      txSk = Constraints.mustSpendScriptOutput
+                oref (toRedeemer $ Vesting.Disburse $ Vesting.beneficiaries vestingDatum)
+           <> Constraints.mustPayToPubKey ppkh (totalValueInInput vestingDatum)
+           <> Constraints.mustPayToOtherScriptWithDatumInTx
+               vestingValHash
+               (toDatum vestingDatum)
+               mempty
+
+      lkps = Constraints.unspentOutputs (Map.fromList utxos)
+           <> Constraints.otherScript (Versioned vestingValidator PlutusV2)
+
+
+  txId <- submitBpiTxConstraintsWith @Vesting lkps txSk (mustValidateInFixed (Ledger.from startTime))
+
+  awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  pure (Ledger.getCardanoTxId txId)

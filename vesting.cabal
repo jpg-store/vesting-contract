@@ -76,6 +76,7 @@ test-suite vesting-tests
   hs-source-dirs: tests
   other-modules:
     Spec.Vesting
+    Spec.Utils
   build-depends:
     , base                  >=4.9 && <5
     , bot-plutus-interface
