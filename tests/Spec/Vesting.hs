@@ -25,7 +25,6 @@ import Ledger (
 import PlutusTx (toBuiltinData, ToData)
 import Data.Map (Map)
 
-
 mkVesting :: Vesting.Input -> Contract () EmptySchema Text TxId
 mkVesting vestingDatum = do
 
@@ -48,7 +47,6 @@ toRedeemer = Redeemer . toBuiltinData
 
 vestingValHash :: ValidatorHash
 vestingValHash = Scripts.validatorHash Vesting.validator
-
 
 getUtxos :: Contract [Value] EmptySchema Text (Map TxOutRef ChainIndexTxOut)
 getUtxos = do
