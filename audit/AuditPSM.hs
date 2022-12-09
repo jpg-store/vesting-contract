@@ -5,6 +5,7 @@
      TemplateHaskell,
      RankNTypes
 #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 module AuditPSM where
 
@@ -27,6 +28,8 @@ import qualified Data.Text.Lazy  as T
 
 type Amount = Integer
 
+deriving instance Show Portion
+
 logTx :: Tx -> Run ()
 logTx = logInfo . T.unpack . pShow
 
@@ -43,7 +46,8 @@ lock mode user' input = withUser user' $ \usr -> lift $ do
   sp <- spend usr totalValue
 
   let tx = tx' <> userSpend sp
-
+  logInfo "Locking"
+  logInfo ("datum: " <> show (schedule input))
   --logTx tx
 
   submitTx usr tx
@@ -63,18 +67,25 @@ type Signers = [KnownUser]
 
 unlock :: Mode Vesting -> KnownUser -> Signers  -> [KnownUser] -> Input -> ToUser -> ToScript -> POSIXTimeRange -> AuditM ()
 unlock mode usr' signers' newBeneficiaries input toUser toScript iv =  do
-  signers  <- users signers'
-  redeemer <- disburse newBeneficiaries
-  beneficiary <- user usr'
+  signers           <- users signers'
+  redeemer          <- disburse newBeneficiaries
+  beneficiary       <- user usr'
   newBeneficiaries' <- users newBeneficiaries
   let outDatum = updateInput newBeneficiaries' input
+  lift $ do logInfo "Unlocking"
+            logInfo ("old datum:" <> show (schedule input))
+            logInfo ("new datum:" <> show (schedule outDatum))
+            logInfo $ "paying user: " <> show toUser
+            logInfo $ "paying script:" <> show toScript
+            logInfo $ "time: " <> show iv
+
   lift $ do
     [(ref,_)] <- utxoAt vestingScript
     let tx' =  mconcat [ spendScript vestingScript ref redeemer input
                        , payToScript vestingScript (mode outDatum) (adaValue toScript)
                        , payToKey beneficiary (adaValue toUser) ]
     tx <- multisignTx ((beneficiary:signers) <> newBeneficiaries') =<< validateIn iv tx'
-    logTx tx
+    --logTx tx
     submitTx beneficiary tx
 
 unlock' :: KnownUser
@@ -87,13 +98,12 @@ unlock' :: KnownUser
         -> AuditM ()
 unlock' = unlock InlineDatum
 
-
 data DepositConfig = DepositConfig {
   benefactor      :: !KnownUser,   -- The user who pays initial funds to the script
   inputAmount     :: !Integer,     -- The amount paid by the benefactor to the script
   beneficiaries   :: ![KnownUser], -- The users authorized to withdraw from the script
   deadlineOffset  :: !POSIXTime,   -- The difference between "now" and the deadline for the first portion (and between portions)
-  portions        :: !Integer       -- How many portions will be generated?
+  portions        :: !Integer      -- How many portions will be generated?
 }
 
 data WithdrawConfig = WithdrawConfig {
@@ -116,11 +126,8 @@ mkSchedule _ _ _ 0 acc = reverse acc
 mkSchedule now offset perPort ports  acc
         =  mkSchedule (now + offset) offset perPort (ports - 1) (Portion' (now + offset)  perPort : acc)
 
-
-mkDeposit :: DepositConfig -> AuditM (POSIXTime, Input')
-mkDeposit DepositConfig{..} = do
-  now <- lift currentTime
-
+mkDeposit :: POSIXTime -> DepositConfig -> AuditM (POSIXTime, Input')
+mkDeposit now DepositConfig{..} = do
   let perPortion = inputAmount `div` portions
 
       sched = mkSchedule now deadlineOffset perPortion portions []
@@ -134,9 +141,9 @@ mkDeposit DepositConfig{..} = do
 
 mkWithdraw ::  WithdrawConfig -> AuditM ()
 mkWithdraw  WithdrawConfig{..} = do
-  lift $ waitUntil validStart
+  lift $ waitUntil (validStart + seconds 10)
   input <- toInput oldInput
-  unlock' beneficiary signers newBeneficiaries input toBeneficiary toScript  (from validStart )
+  unlock' beneficiary signers newBeneficiaries input toBeneficiary toScript  (from $ validStart + seconds 10)
 
 {-
 mkTest :: TestConfig -> AuditM ()
@@ -165,7 +172,7 @@ simpleHappyPath = testConfig depositCfg [withdrawCfg]
       oldInput = Input' [drazen,chase,vlad] [Portion' (seconds 100) 100]
     }
 
-data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer}
+data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer} deriving Show
 
 type Schedule' = [Portion']
 
@@ -179,7 +186,6 @@ toInput (Input' bs' ps') = do
   bs <- users bs'
   let ps =  map (\(Portion' dl amt) -> Portion dl (adaValue amt)) ps'
   pure $ Input bs ps
-
 
 updateInput' :: [KnownUser] -> Input' -> Input'
 updateInput' bs (Input' _ sch) = Input' bs sch
@@ -211,12 +217,13 @@ the code here, but shouldn't be) whereas it should be updated with the list of u
 
 vested :: POSIXTime -> Schedule' -> Integer
 vested now   = foldl' (\acc p -> amount' p + acc) 0
-                            . filter (\t -> deadline' t <= now)
+                            . filter (\t -> deadline' t < now)
 
 
 unvested :: POSIXTime -> Schedule' -> Integer
 unvested now   = foldl' (\acc p -> amount' p + acc) 0
                             . filter (\t -> deadline' t >= now)
+
 
 knownUsers :: [KnownUser]
 knownUsers = [andrea,borja,chase,drazen,ellen,george,las,magnus,oskar,vlad]
@@ -245,9 +252,9 @@ genHappyWithdrawCfg inp@(Input' bs ps) = get >>= \i -> case ps !? i of
     newBeneficiaries <- lift $ sublistOf knownUsers `suchThat` (not . null)
     signatories      <- lift $ sublistOf bs `suchThat` (\ss -> length ss > length bs `div` 2)
     let newInput = updateInput' newBeneficiaries inp
-        cfg = WithdrawConfig beneficiary signatories newBeneficiaries dl amt (unvested dl ps) inp
+        locked = unvested dl ps
+        cfg = WithdrawConfig beneficiary signatories newBeneficiaries dl amt  (max 0 (locked - amt)) inp
     pure . Just $ (cfg, newInput)
-
 
 genHappyTestConfig :: Gen TestConfig
 genHappyTestConfig = do
@@ -264,13 +271,15 @@ genHappyTestConfig = do
 
 runTestWithConfig :: TestConfig -> AuditM ()
 runTestWithConfig (depCfg,ws) = do
-  void $  mkDeposit depCfg
+  void $  mkDeposit 0 depCfg
+  lift logBalanceSheet
   runWithdrawals ws
  where
    runWithdrawals :: [WithdrawConfig] -> AuditM ()
    runWithdrawals [] = pure ()
-   runWithdrawals (x:xs) = (lift logBalanceSheet >>  mkWithdraw x) >> runWithdrawals xs
+   runWithdrawals (x:xs) =   mkWithdraw x >> lift logBalanceSheet >> runWithdrawals xs
 
+runHappyTests :: IO ()
 runHappyTests = do
   tests <- zip [0..] <$> sample' genHappyTestConfig
-  forM tests $ \(n,t) -> runAuditTest  ("happy #" <> show n) (runTestWithConfig t)
+  forM_ tests $ \(n,t) -> runAuditTest  ("happy #" <> show n) (runTestWithConfig t)
