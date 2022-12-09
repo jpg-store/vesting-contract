@@ -112,6 +112,7 @@ disburse users = withUsers users $ pure . Disburse
 mkInput :: [KnownUser] -> Schedule -> AuditM Input
 mkInput users sch = withUsers users $ pure . flip Input sch
 
+
 -- We should run tests in both Inline and Hash modes, this makes signatures less verbose
 type Mode t = (DatumType t -> DatumMode (DatumType t))
 
@@ -126,3 +127,6 @@ unique p bs = case filter p bs of
 
 inputThat :: Pred Input -> Pred (TxBox Vesting)
 inputThat p = p . txBoxDatum
+
+updateInput :: [PubKeyHash] -> Input -> Input
+updateInput bs (Input _ sch) = Input bs sch

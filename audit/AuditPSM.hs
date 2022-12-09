@@ -13,19 +13,22 @@ import Canonical.Vesting
 import Plutus.V2.Ledger.Api (PubKeyHash)
 import Control.Monad.State
 import Control.Monad
-import Control.Monad.Reader
 import Plutus.V1.Ledger.Time (POSIXTime, POSIXTimeRange)
 import Plutus.V1.Ledger.Interval (from)
 import Utils
 import Data.List (foldl')
+import GHC.Natural
 
 import Test.QuickCheck
-import Test.Tasty
+
+import Text.Pretty.Simple
+
+import qualified Data.Text.Lazy  as T
 
 type Amount = Integer
 
 logTx :: Tx -> Run ()
-logTx = logError . ppTransaction
+logTx = logInfo . T.unpack . pShow
 
 lock :: Mode Vesting
      -> KnownUser
@@ -46,7 +49,7 @@ lock mode user' input = withUser user' $ \usr -> lift $ do
   submitTx usr tx
 
 lock' :: KnownUser -> Input -> AuditM ()
-lock' = lock HashDatum
+lock' = lock InlineDatum
 
 multisignTx :: [PubKeyHash] -> Tx -> Run Tx
 multisignTx usrs tx = foldM (flip signTx) tx usrs
@@ -58,100 +61,129 @@ type ToUser = Amount
 type ToScript = Amount
 type Signers = [KnownUser]
 
-unlock :: Mode Vesting -> KnownUser -> Signers  -> Input -> ToUser -> ToScript -> POSIXTimeRange -> AuditM ()
-unlock mode usr' signers' input toUser toScript iv =  do
-  redeemer <- disburse [usr']
+unlock :: Mode Vesting -> KnownUser -> Signers  -> [KnownUser] -> Input -> ToUser -> ToScript -> POSIXTimeRange -> AuditM ()
+unlock mode usr' signers' newBeneficiaries input toUser toScript iv =  do
   signers  <- users signers'
+  redeemer <- disburse newBeneficiaries
   beneficiary <- user usr'
+  newBeneficiaries' <- users newBeneficiaries
+  let outDatum = updateInput newBeneficiaries' input
   lift $ do
     [(ref,_)] <- utxoAt vestingScript
     let tx' =  mconcat [ spendScript vestingScript ref redeemer input
-                       , payToScript vestingScript (mode input) (adaValue toScript)
+                       , payToScript vestingScript (mode outDatum) (adaValue toScript)
                        , payToKey beneficiary (adaValue toUser) ]
-    tx <- multisignTx signers =<< validateIn iv tx'
-    --logTx tx
+    tx <- multisignTx ((beneficiary:signers) <> newBeneficiaries') =<< validateIn iv tx'
+    logTx tx
     submitTx beneficiary tx
-
 
 unlock' :: KnownUser
         -> Signers
+        -> [KnownUser]
         -> Input
         -> ToUser
         -> ToScript
         -> POSIXTimeRange
         -> AuditM ()
-unlock' = unlock HashDatum
+unlock' = unlock InlineDatum
 
-simpleContract :: AuditM ()
-simpleContract = do
-  now <- lift currentTime
 
-  let deadline = now + seconds 100
-      amount = 100
-
-  input <- mkInput [drazen,chase,vlad] [adaPortion deadline amount]
-
-  lock' andrea input
-
-  lift $ waitUntil (deadline + seconds 200)
-
-  unlock' drazen [drazen,chase] input 99 1 (from $ deadline + seconds 200)
-
-data TestConfig = TestConfig {
+data DepositConfig = DepositConfig {
   benefactor      :: !KnownUser,   -- The user who pays initial funds to the script
   inputAmount     :: !Integer,     -- The amount paid by the benefactor to the script
   beneficiaries   :: ![KnownUser], -- The users authorized to withdraw from the script
-  deadlineOffset  :: !POSIXTime,    -- The difference between "now" and the deadline for each portion
-  withdrawCfgs    :: ![WithdrawConfig]
+  deadlineOffset  :: !POSIXTime,   -- The difference between "now" and the deadline for the first portion (and between portions)
+  portions        :: !Integer       -- How many portions will be generated?
 }
 
 data WithdrawConfig = WithdrawConfig {
-  beneficiary    :: !KnownUser,   -- The user who withdraws the funds from the script
-  withdrawOffset :: !POSIXTime,   -- The difference between "now" and the time of the withdrawal transaction
-  signatories    :: ![KnownUser], -- The users who sign the withdrawal transaction
-  toBeneficiary  :: !Integer,     -- The ADA value to be paid to the beneficary in the withdrawal transaction
-  toScript       :: !Integer      -- The ADA value to be paid back to the script in the withdrawal transaction
+  beneficiary      :: !KnownUser,
+  signers          :: ![KnownUser],
+  newBeneficiaries :: ![KnownUser],
+  validStart       :: !POSIXTime,
+  toBeneficiary    :: !Integer,
+  toScript         :: !Integer,
+  oldInput         :: !Input'
 }
 
-mkDeposit :: TestConfig -> AuditM (POSIXTime, Input)
-mkDeposit TestConfig{..} = do
+type TestConfig = (DepositConfig,[WithdrawConfig])
+
+testConfig :: DepositConfig -> [WithdrawConfig] -> TestConfig
+testConfig = (,)
+
+mkSchedule :: POSIXTime -> POSIXTime -> Integer -> Integer -> Schedule' -> Schedule'
+mkSchedule _ _ _ 0 acc = reverse acc
+mkSchedule now offset perPort ports  acc
+        =  mkSchedule (now + offset) offset perPort (ports - 1) (Portion' (now + offset)  perPort : acc)
+
+
+mkDeposit :: DepositConfig -> AuditM (POSIXTime, Input')
+mkDeposit DepositConfig{..} = do
   now <- lift currentTime
 
-  let deadline = now + deadlineOffset
+  let perPortion = inputAmount `div` portions
 
-  input <- mkInput beneficiaries [adaPortion deadline inputAmount]
+      sched = mkSchedule now deadlineOffset perPortion portions []
+
+  let input' = Input' beneficiaries sched
+  input <- toInput input'
 
   lock' benefactor input
 
-  pure (now, input)
+  pure (now, input')
 
-mkWithdraw :: POSIXTime -> Input -> WithdrawConfig -> AuditM ()
-mkWithdraw now input WithdrawConfig{..} = do
-  lift $ wait withdrawOffset
+mkWithdraw ::  WithdrawConfig -> AuditM ()
+mkWithdraw  WithdrawConfig{..} = do
+  lift $ waitUntil validStart
+  input <- toInput oldInput
+  unlock' beneficiary signers newBeneficiaries input toBeneficiary toScript  (from validStart )
 
-  unlock' beneficiary signatories input toBeneficiary toScript (from $ now + withdrawOffset)
-
+{-
 mkTest :: TestConfig -> AuditM ()
 mkTest cfg@TestConfig{..} = do
   (now, input) <- mkDeposit cfg
 
   mapM_ (mkWithdraw now input) withdrawCfgs
-
+-}
 simpleHappyPath :: TestConfig
-simpleHappyPath = TestConfig {
-  benefactor     = andrea,
-  inputAmount    = 100,
-  beneficiaries  = [drazen,chase,vlad],
-  deadlineOffset = seconds 100,
-  withdrawCfgs   = [simpleWithdrawCfg]
-} where
-    simpleWithdrawCfg = WithdrawConfig {
-      beneficiary    = drazen,
-      withdrawOffset = seconds 200,
-      signatories    = [drazen,chase],
-      toBeneficiary  = 100,
-      toScript       = 0
+simpleHappyPath = testConfig depositCfg [withdrawCfg]
+  where
+    depositCfg = DepositConfig {
+      benefactor     = andrea,
+      inputAmount    = 100,
+      beneficiaries  = [drazen,chase,vlad],
+      deadlineOffset = seconds 100,
+      portions       = 1
     }
+    withdrawCfg = WithdrawConfig {
+      beneficiary    = drazen,
+      signers    = [drazen,chase],
+      newBeneficiaries = [drazen],
+      toBeneficiary  = 100,
+      toScript       = 0,
+      validStart  = seconds 200,
+      oldInput = Input' [drazen,chase,vlad] [Portion' (seconds 100) 100]
+    }
+
+data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer}
+
+type Schedule' = [Portion']
+
+data Input' = Input' {
+  beneficiaries' :: [KnownUser],
+  schedule' :: Schedule'
+}
+
+toInput :: Input' -> AuditM Input
+toInput (Input' bs' ps') = do
+  bs <- users bs'
+  let ps =  map (\(Portion' dl amt) -> Portion dl (adaValue amt)) ps'
+  pure $ Input bs ps
+
+
+updateInput' :: [KnownUser] -> Input' -> Input'
+updateInput' bs (Input' _ sch) = Input' bs sch
+
 
 {- Should suceed properties:
 
@@ -166,71 +198,79 @@ Withdrawal:
    - signatures == majority of beneficiaries
    - withdrawOffset is positive & >= currentTime (time of withdrawal)
    - toBeneficiary <= remaining value locked at script
+   - output datum == input datum {beneficiaries == newKeys} -- newKeys = arg to disburse
+   - locked amount == unvested amount -- *
+
+* a vested portion is one where the deadline is *BEFORE* the validity interval of the transaction
+... so an unvested portion is one where the deadline is *AFTER* the validity interval of the transaction
+
+
+I think this is failing becauase the output datum is == to the original input datum (which is the same for all withdrawals in
+the code here, but shouldn't be) whereas it should be updated with the list of users in the Disburse redeemer
 -}
+
+vested :: POSIXTime -> Schedule' -> Integer
+vested now   = foldl' (\acc p -> amount' p + acc) 0
+                            . filter (\t -> deadline' t <= now)
+
+
+unvested :: POSIXTime -> Schedule' -> Integer
+unvested now   = foldl' (\acc p -> amount' p + acc) 0
+                            . filter (\t -> deadline' t >= now)
 
 knownUsers :: [KnownUser]
 knownUsers = [andrea,borja,chase,drazen,ellen,george,las,magnus,oskar,vlad]
 
-genHappyDepositCfg :: Gen (KnownUser,Amount,[KnownUser],POSIXTime)
+(!?) :: [a] -> Natural -> Maybe a
+[]     !? _     = Nothing
+(x:_)  !? 0 = Just x
+(_:xs) !? n = xs !? (n-1)
+
+genHappyDepositCfg :: Gen DepositConfig
 genHappyDepositCfg = do
   benefactor'     <- elements knownUsers
-  inputAmt'       <- chooseInteger (1,10_000)
+  inputAmt'       <- pure 1000 -- chooseInteger (1,10_000)
   beneficiaries'  <- sublistOf knownUsers `suchThat` (not . null)
   deadlineOffset' <- seconds <$> arbitrary @Integer `suchThat` (>= 10)
-  pure (benefactor', inputAmt', beneficiaries', deadlineOffset')
+  portions'       <- pure 2
+  pure $ DepositConfig benefactor' inputAmt' beneficiaries' deadlineOffset' portions'
 
-genHappyWithdrawCfg :: [KnownUser] ->  StateT (POSIXTime,Integer) Gen (Maybe WithdrawConfig)
-genHappyWithdrawCfg beneficiaries' = do
-  (now,balance) <- get
-  if balance <= 0
-    then pure Nothing
-    else do
-      beneficiary' <- lift $ elements beneficiaries'
+genHappyWithdrawCfg :: Input' -> StateT Natural Gen (Maybe (WithdrawConfig,Input'))
+genHappyWithdrawCfg (Input' [] _) = pure Nothing
+genHappyWithdrawCfg (Input' _ []) = pure Nothing
+genHappyWithdrawCfg inp@(Input' bs ps) = get >>= \i -> case ps !? i of
+  Nothing -> pure Nothing
+  Just (Portion' dl amt) ->  modify' (+1) >>  do
+    beneficiary      <- lift $ elements bs
+    newBeneficiaries <- lift $ sublistOf knownUsers `suchThat` (not . null)
+    signatories      <- lift $ sublistOf bs `suchThat` (\ss -> length ss > length bs `div` 2)
+    let newInput = updateInput' newBeneficiaries inp
+        cfg = WithdrawConfig beneficiary signatories newBeneficiaries dl amt (unvested dl ps) inp
+    pure . Just $ (cfg, newInput)
 
-      withdrawOffset' <- lift $ seconds <$> arbitrary @Integer `suchThat` (>= 10)
 
-      signatories'    <- lift $ sublistOf beneficiaries'
-                            `suchThat` (\signers ->
-                               length signers > (length beneficiaries' `div` 2))
-
-      toBeneficiary' <- lift $ chooseInteger (1,balance)
-
-      let toScript = balance - toBeneficiary'
-
-      modify' $ const (withdrawOffset', toScript)
-
-      pure . Just $ WithdrawConfig beneficiary' withdrawOffset' signatories' toBeneficiary' toScript
-
-genHappyCfg :: Gen TestConfig
-genHappyCfg = do
-  (bfctr,inAmt,bfs,dOff) <- genHappyDepositCfg
-  wdrCfgs <- evalStateT (genWithdrawConfigs bfs) (dOff,inAmt)
-  pure $ TestConfig {
-          benefactor     = bfctr,
-          inputAmount    = inAmt,
-          beneficiaries  = bfs,
-          deadlineOffset = dOff,
-          withdrawCfgs   = wdrCfgs
-      }
+genHappyTestConfig :: Gen TestConfig
+genHappyTestConfig = do
+  depCfg@DepositConfig{..} <- genHappyDepositCfg
+  let sch = mkSchedule 0 deadlineOffset (inputAmount `div` portions) portions []
+      inp = Input' beneficiaries sch
+  withdrawals <- flip evalStateT 0 $ genHappyWithdrawals inp
+  pure (depCfg,withdrawals)
  where
-   genWithdrawConfigs :: [KnownUser] ->  StateT (POSIXTime,Integer) Gen [WithdrawConfig]
-   genWithdrawConfigs bfs = genHappyWithdrawCfg bfs >>= \case
+   genHappyWithdrawals :: Input' -> StateT Natural Gen [WithdrawConfig]
+   genHappyWithdrawals inp = genHappyWithdrawCfg inp >>= \case
      Nothing -> pure []
-     Just cfg -> (cfg:) <$> genWithdrawConfigs bfs
+     Just (cfg,newInp) -> (cfg:) <$> genHappyWithdrawals newInp
 
-
-sampleHappyTests :: IO TestTree
-sampleHappyTests = do
-  configs <- sample' genHappyCfg
-  trees <-  flip evalStateT 1 $ traverse go configs
-  pure $ testGroup "happy" trees
+runTestWithConfig :: TestConfig -> AuditM ()
+runTestWithConfig (depCfg,ws) = do
+  void $  mkDeposit depCfg
+  runWithdrawals ws
  where
-   go :: TestConfig -> StateT Int IO TestTree
-   go cfg = do
-     count <- get
-     modify' (+1)
-     pure $ testNoErrorsTrace  (adaValue 100_000) defaultConfig ("happy #" <> show count) (runAuditM $ mkTest cfg)
+   runWithdrawals :: [WithdrawConfig] -> AuditM ()
+   runWithdrawals [] = pure ()
+   runWithdrawals (x:xs) = (lift logBalanceSheet >>  mkWithdraw x) >> runWithdrawals xs
 
-
-runHappyTests :: IO ()
-runHappyTests = sampleHappyTests >>= defaultMain
+runHappyTests = do
+  tests <- zip [0..] <$> sample' genHappyTestConfig
+  forM tests $ \(n,t) -> runAuditTest  ("happy #" <> show n) (runTestWithConfig t)

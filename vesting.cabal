@@ -93,6 +93,7 @@ library audit
     , plutus-tx
     , plutus-tx-plugin
     , plutus-simple-model
+    , pretty-simple
     , QuickCheck
     , optparse-generic
     , tasty
