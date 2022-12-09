@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Spec.Vesting (simpleLockVesting, checkVestingUtxoExists, mkAndUnlockVesting)
+import Spec.Vesting
 import Data.Default (def)
 import Test.Tasty
 import Test.Plutip.LocalCluster (withConfiguredCluster)
@@ -14,6 +14,7 @@ tests =
       [ simpleLockVesting
       , checkVestingUtxoExists
       , mkAndUnlockVesting
+      , nativeTokenVesting
       ]
 
 main :: IO()

@@ -8,6 +8,7 @@ module Spec.Utils
   , getVestingUtxos
   , unlockVesting
   , usersPPkhs
+  , mintNativeTokens
   )
   where
 
@@ -24,7 +25,11 @@ import Ledger
       Value,
       ChainIndexTxOut(ScriptChainIndexTxOut),
       Datum(..),
-      Redeemer(Redeemer), Versioned (..), Language (PlutusV2), unPaymentPubKeyHash
+      Redeemer(Redeemer),
+      Versioned (..),
+      Language (PlutusV2),
+      MintingPolicy,
+      MintingPolicyHash, TokenName
     )
 import Ledger qualified
 import Ledger.Constraints qualified as Constraints
@@ -97,6 +102,16 @@ findVestingUtxo vestingDatum = do
     getValidatorDatum ScriptChainIndexTxOut{..} = do
       Contract.datumFromHash (fst _ciTxOutScriptDatum)
     getValidatorDatum _                         = return Nothing
+
+mintNativeTokens :: MintingPolicy -> MintingPolicyHash -> TokenName -> AuditM TxId
+mintNativeTokens mp mpsh tn = do
+  let txSk = Constraints.mustMintCurrencyWithRedeemer mpsh Ledger.unitRedeemer tn 10_000
+      lkps = Constraints.mintingPolicy (Versioned mp PlutusV2)
+
+  txId <- lift $ submitBpiTxConstraintsWith @Void lkps txSk []
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  pure (Ledger.getCardanoTxId txId)
+  
 
 getVestingUtxos :: AuditM (Map TxOutRef ChainIndexTxOut)
 getVestingUtxos = lift $ Contract.utxosAt Vesting.vestingAddr
