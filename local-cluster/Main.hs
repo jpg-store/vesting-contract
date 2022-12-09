@@ -51,7 +51,7 @@ main = do
     wallets <- mapM addSomeWalletWithCollateral walletFunds
 
     mapM_ (`CI.awaitWalletFunded` slotLen) wallets
-    
+
     liftIO $ putStrLn "Waiting for wallets to be funded..."
 
     separate

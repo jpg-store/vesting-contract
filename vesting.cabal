@@ -23,8 +23,8 @@ common lang
     CPP
     LambdaCase
     DeriveGeneric
-    ImportQualifiedPost 
-    NumericUnderscores 
+    ImportQualifiedPost
+    NumericUnderscores
     DerivingStrategies
     FlexibleContexts
     StandaloneDeriving

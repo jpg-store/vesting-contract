@@ -10,6 +10,7 @@ module Spec.Setup
   , execVestingTest
   , fromUsers
   , withUser
+  , defState
   )
   where
 
@@ -43,7 +44,7 @@ defWallet :: TestWallet
 defWallet = TestWallet [fromInteger defCollateralSize, 10_000_000_000] Nothing
 
 defPPKH :: PaymentPubKeyHash
-defPPKH = PaymentPubKeyHash "72cae61f85ed97fb0e7703d9fec382e4973bf47ea2ac9335cab1e3fe" 
+defPPKH = PaymentPubKeyHash "72cae61f85ed97fb0e7703d9fec382e4973bf47ea2ac9335cab1e3fe"
 
 type family Context (user :: UserData) where
   Context 'Wallet = TestWallet
@@ -113,9 +114,13 @@ fromUsers :: (User -> Bool) -> Users d -> [Context d]
 fromUsers f = map snd . Map.toList . Map.filterWithKey (\k _ -> f k) . getUsers
 
 shouldHave :: User -> Value -> WalletState
-shouldHave user value = 
+shouldHave user value =
   modify (Users
           . Map.update
               (\w -> Just $ w {twExpected = Just (VEq, value <> Ada.lovelaceValueOf defCollateralSize )}) user
           . getUsers)
-  
+
+
+defState :: WalletState
+defState = modify id
+

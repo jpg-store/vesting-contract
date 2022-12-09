@@ -1,6 +1,6 @@
 module Main (main) where
 
-import Spec.Vesting (simpleLockVesting)
+import Spec.Vesting (simpleLockVesting, checkVestingUtxoExists, mkAndUnlockVesting)
 import Data.Default (def)
 import Test.Tasty
 import Test.Plutip.LocalCluster (withConfiguredCluster)
@@ -12,6 +12,8 @@ tests =
       config
       "Vesting Contract Tests"
       [ simpleLockVesting
+      , checkVestingUtxoExists
+      , mkAndUnlockVesting
          -- assertExecutionWith
          --  [ShowTraceButOnlyContext ContractLog $ Error [AnyLog]]
          --  "Get all vesting utxos"
@@ -43,7 +45,7 @@ tests =
         --
         --     let (Right (vestingDatum, _)) = outcome execRes
         --
-        --     withContractAs 1 $ \[_w0pkh] -> 
+        --     withContractAs 1 $ \[_w0pkh] ->
         --       makeAndUnlockVesting vestingDatum
         --   )
         --   [shouldSucceed]

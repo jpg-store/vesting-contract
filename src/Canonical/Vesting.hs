@@ -275,4 +275,4 @@ vestingAddr :: Address
 vestingAddr = scriptHashAddress $ ScriptUtils.validatorHash vestingValidator
 
 vestingValHash :: ValidatorHash
-vestingValHash = ScriptUtils.validatorHash vestingValidator 
+vestingValHash = ScriptUtils.validatorHash vestingValidator
