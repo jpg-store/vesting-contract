@@ -32,8 +32,8 @@ defaultConfig = defaultBabbage
 setupUsers :: Run [PubKeyHash]
 setupUsers = replicateM 10 $ newUser $ adaValue 10_000
 
-runTestIO :: forall a. String -> Run a -> IO ()
-runTestIO nm = defaultMain .  testNoErrorsTrace (adaValue 100_000) defaultConfig nm
+mkTestTree :: forall a. String -> Run a -> TestTree
+mkTestTree  = testNoErrors (adaValue 100_000) defaultConfig
 
 {- Typed Validator -}
 
@@ -92,8 +92,8 @@ type AuditM a = ReaderT Users Run a
 runAuditM :: AuditM a -> Run a
 runAuditM ma = identifyUsers >>= runReaderT ma
 
-runAuditTest :: String -> AuditM () -> IO ()
-runAuditTest msg ma = runTestIO msg (runAuditM ma)
+auditTest :: String -> AuditM () -> TestTree
+auditTest msg ma = mkTestTree msg (runAuditM ma)
 
 user :: KnownUser -> AuditM PubKeyHash
 user (Lens u) = ask <&> view u

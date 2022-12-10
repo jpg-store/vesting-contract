@@ -9,15 +9,16 @@
 module Generators where
 
 import Plutus.Model
-import Canonical.Vesting
+import Canonical.Vesting ()
 import Plutus.V2.Ledger.Api (PubKeyHash)
 import Control.Monad.State
 import Utils
 import GHC.Natural
 import Test.QuickCheck
 import Config
-
-
+import Data.List
+import qualified Data.Set as S
+import Control.Lens (set,ix)
 {- Should suceed properties:
 
 Deposit:
@@ -35,27 +36,55 @@ Withdrawal:
    - locked amount == unvested amount
 -}
 
+isUnique :: (Eq a, Ord a) => [a] -> Bool
+isUnique xs = length xs == S.size (S.fromList xs)
+
+emptyBeneficiariesOnInput :: TestConfig -> TestConfig
+emptyBeneficiariesOnInput (d,ws) = (d {beneficiaries = []},ws)
+
+-- not very performant, shouldn't matter that much in practice
+overRandomElem :: (a -> a) -> [a] -> Gen [a]
+overRandomElem f as = do
+  i <- chooseInt (0,length as)
+  let a  = as !! i
+      a' = f a
+  pure $ set (ix i) a' as
+
+overRandomWithdrawConfig :: (WithdrawConfig -> WithdrawConfig) -> TestConfig -> Gen TestConfig
+overRandomWithdrawConfig f (d,ws) = overRandomElem f ws >>= \ws' -> pure (d,ws')
+
+emptyNewBeneficiariesInWithdrawals :: TestConfig -> Gen TestConfig
+emptyNewBeneficiariesInWithdrawals = overRandomWithdrawConfig $ \w -> w {newBeneficiaries = []}
+
+emptySignersInWithdrawals :: TestConfig -> Gen TestConfig
+emptySignersInWithdrawals = overRandomWithdrawConfig $ \w -> w {signers = []}
+
+
+
 type Seconds = Integer
 
 genSchedule' :: Seconds -> Amount -> Gen Schedule'
 genSchedule' _ 0 = pure []
 genSchedule' time amt  = do
-  time' <- chooseInteger (time,1_000_000)
+  time' <- chooseInteger (time+1001,1_000_000_000)
   amt'  <- chooseInteger (1,amt)
   let port = Portion' (seconds time') amt'
   if amt - amt' == 0
     then pure [port]
-    else (port:) <$> genSchedule' time amt
-
+    else (port:) <$> genSchedule' time' (amt - amt')
 
 genHappyDepositCfg :: Gen DepositConfig
 genHappyDepositCfg = do
   benefactor'     <- elements knownUsers
-  portions'       <- chooseInteger (1,10)
-  inputAmt'       <- chooseInteger (1,10_000) `suchThat` (\x -> x `div` portions' == 0)
+  inputAmt'       <- chooseInteger (1,10_000)
+  portions'       <- sortOn deadline' <$> genSchedule' 100 inputAmt' `suchThat` isUnique
   beneficiaries'  <- sublistOf knownUsers `suchThat` (not . null)
-  deadlineOffset' <- seconds <$> arbitrary @Integer `suchThat` (>= 10)
-  pure $ DepositConfig benefactor' inputAmt' beneficiaries' deadlineOffset' portions'
+  pure $ DepositConfig
+           benefactor'
+           inputAmt'
+           beneficiaries'
+           (seconds 100)
+           portions'
 
 genHappyWithdrawCfg :: Input' -> StateT Natural Gen (Maybe (WithdrawConfig,Input'))
 genHappyWithdrawCfg (Input' [] _) = pure Nothing
@@ -74,8 +103,7 @@ genHappyWithdrawCfg inp@(Input' bs ps) = get >>= \i -> case ps !? i of
 genHappyTestConfig :: Gen TestConfig
 genHappyTestConfig = do
   depCfg@DepositConfig{..} <- genHappyDepositCfg
-  let sch = mkSchedule 0 deadlineOffset (inputAmount `div` portions) portions []
-      inp = Input' beneficiaries sch
+  let inp = Input' beneficiaries portions
   withdrawals <- flip evalStateT 0 $ genHappyWithdrawals inp
   pure (depCfg,withdrawals)
  where
@@ -88,12 +116,13 @@ genHappyTestConfig = do
 simpleHappyPath :: TestConfig
 simpleHappyPath = testConfig depositCfg [withdrawCfg]
   where
+    sched =  [Portion' (seconds 100) 100]
     depositCfg = DepositConfig {
       benefactor     = andrea,
       inputAmount    = 100,
       beneficiaries  = [drazen,chase,vlad],
       deadlineOffset = seconds 100,
-      portions       = 1
+      portions       = sched
     }
     withdrawCfg = WithdrawConfig {
       beneficiary    = drazen,
@@ -102,5 +131,5 @@ simpleHappyPath = testConfig depositCfg [withdrawCfg]
       toBeneficiary  = 100,
       toScript       = 0,
       validStart  = seconds 200,
-      oldInput = Input' [drazen,chase,vlad] [Portion' (seconds 100) 100]
+      oldInput = Input' [drazen,chase,vlad] sched
     }

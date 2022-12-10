@@ -11,7 +11,7 @@ data DepositConfig = DepositConfig {
   inputAmount     :: !Integer,     -- The amount paid by the benefactor to the script
   beneficiaries   :: ![KnownUser], -- The users authorized to withdraw from the script
   deadlineOffset  :: !POSIXTime,   -- The difference between "now" and the deadline for the first portion (and between portions)
-  portions        :: !Integer      -- How many portions will be generated?
+  portions        :: !Schedule'
 }
 
 data WithdrawConfig = WithdrawConfig {
@@ -30,7 +30,7 @@ testConfig :: DepositConfig -> [WithdrawConfig] -> TestConfig
 testConfig = (,)
 
 -- Variant datum types for testing with ADA only values (for simplicity)
-data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer} deriving Show
+data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer} deriving (Show, Eq, Ord)
 
 type Schedule' = [Portion']
 
@@ -51,8 +51,3 @@ updateInput' bs (Input' _ sch) = Input' bs sch
 unvested :: POSIXTime -> Schedule' -> Integer
 unvested now   = foldl' (\acc p -> amount' p + acc) 0
                             . filter (\t -> deadline' t >= now)
-
-mkSchedule :: POSIXTime -> POSIXTime -> Integer -> Integer -> Schedule' -> Schedule'
-mkSchedule _ _ _ 0 acc = reverse acc
-mkSchedule now offset perPort ports  acc
-        =  mkSchedule (now + offset) offset perPort (ports - 1) (Portion' (now + offset)  perPort : acc)
