@@ -5,6 +5,7 @@ module Spec.Vesting
   , mkAndUnlockVesting
   , nativeTokenVesting
   , unboundedDatum
+  , multiUserVesting
   )
   where
 
@@ -118,6 +119,40 @@ nativeTokenVesting = execVestingTest "make and unlock vesting of native tokens s
                      )
                      [shouldSucceed]
 
+multiUserVesting :: VestingTest
+multiUserVesting = execVestingTest "Make vesting to multiple pubKeyHash(es)"
+                    (do
+                        Drazen `shouldHave` (Ada.adaValueOf 9_000 <> Value.assetClassValue Mint.vestingAC 9_000 <> Ada.lovelaceValueOf (-565413))
+                    )
+                    (do
+                         void $ withUser Drazen (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
+
+                         execRes <- withUser Drazen $ do
+                            (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                            mkVesting [Vlad, Oskar, Magnus, Ellen] [Portion startTime (Ada.adaValueOf 1000 <> Value.assetClassValue Mint.vestingAC 1000)]
+
+                         let ((vestingDatum, _), _) = case outcome execRes of
+                                                        Left msg -> error (show msg)
+                                                        Right res -> res
+
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Just oref, _) = case outcome execRes2 of
+                                                Left msg -> error (show msg)
+                                                Right res -> res
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Vlad $ unlockVesting oref [Vlad, Oskar, Magnus] vestingDatum action
+                    )
+                    [shouldSucceed]
+
 unboundedDatum :: VestingTest
 unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
                      (do
@@ -128,7 +163,7 @@ unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
                      (
                        do
 
-                         -- Oskar mints 
+                         -- Oskar mints native tokens
                          void $ withUser Oskar (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
 
                          execRes <- withUser Oskar $ do
@@ -156,4 +191,3 @@ unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
                          withUser Vlad $ unlockVesting oref [Vlad] vestingDatum action
                      )
                      [shouldFail]
-

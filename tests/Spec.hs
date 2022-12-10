@@ -12,11 +12,12 @@ tests =
       config
       "Vesting Contract Tests"
       [
-      simpleLockVesting
-      , checkVestingUtxoExists
-      , mkAndUnlockVesting
-      , nativeTokenVesting
+      -- simpleLockVesting
+      -- , checkVestingUtxoExists
+      -- , mkAndUnlockVesting
+      -- , nativeTokenVesting
       -- , unboundedDatum
+       multiUserVesting
       ]
 
 main :: IO()
