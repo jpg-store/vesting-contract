@@ -11,10 +11,12 @@ tests =
   in withConfiguredCluster
       config
       "Vesting Contract Tests"
-      [ simpleLockVesting
+      [
+      simpleLockVesting
       , checkVestingUtxoExists
       , mkAndUnlockVesting
       , nativeTokenVesting
+      -- , unboundedDatum
       ]
 
 main :: IO()

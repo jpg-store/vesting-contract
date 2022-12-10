@@ -1,5 +1,5 @@
 {-# LANGUAGE NoImplicitPrelude #-}
-module Spec.Mint (mkPolicy, currencySymbol, mintingPolicy, mintingPolicyHash) where
+module Spec.Mint (mkPolicy, currencySymbol, mintingPolicy, mintingPolicyHash, vestingAC, vestingToken) where
 
 import Ledger qualified
 import Plutus.Script.Utils.V2.Scripts qualified as ScriptUtils
@@ -7,6 +7,7 @@ import Plutus.Script.Utils.V2.Typed.Scripts.MonetaryPolicies (mkUntypedMintingPo
 import Plutus.V2.Ledger.Contexts
 import PlutusTx qualified
 import PlutusTx.Prelude
+import Ledger.Value qualified as Value
 
 {-# INLINEABLE mkPolicy #-}
 mkPolicy :: () -> ScriptContext -> Bool
@@ -28,3 +29,10 @@ currencySymbol = ScriptUtils.scriptCurrencySymbol mintingPolicy
 
 mintingPolicyHash :: Ledger.MintingPolicyHash
 mintingPolicyHash = Ledger.mintingPolicyHash (Ledger.Versioned mintingPolicy Ledger.PlutusV2)
+
+vestingToken :: Ledger.TokenName
+vestingToken = "VestingToken"
+
+vestingAC :: Ledger.AssetClass
+vestingAC = Value.assetClass currencySymbol vestingToken
+

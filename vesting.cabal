@@ -6,6 +6,13 @@ author:        Richard Wallace, Jonathan Fischoff
 maintainer:    jonathan@Canonicalllc.com
 build-type:    Simple
 
+
+flag defer-plugin-errors
+    description:
+        Defer errors from the plugin, useful for things like Haddock that can't handle it.
+    default: True
+    manual: True
+
 common lang
   build-depends:    base
   default-language: Haskell2010
@@ -34,7 +41,9 @@ common lang
   ghc-options:
     -Wall -Wcompat -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
-    -Werror
+    -Werror 
+  if flag(defer-plugin-errors)
+    ghc-options: -fplugin-opt PlutusTx.Plugin:defer-errors
 
 library
   import:          lang
