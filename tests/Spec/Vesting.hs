@@ -119,21 +119,22 @@ nativeTokenVesting = execVestingTest "make and unlock vesting of native tokens s
                      [shouldSucceed]
 
 unboundedDatum :: VestingTest
-unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
+unboundedDatum = execVestingTest "Making a longer vesting period will lock the tokens permanently in the vesting contract"
                      (do
                         let txFee :: Value
                             txFee = Ada.lovelaceValueOf (-388813 + (-1500800)) -- Fee for Minting policy and submitting tx for vesting.
-                        Oskar `shouldHave` (Ada.adaValueOf 9_000 <> txFee <> Value.assetClassValue Mint.vestingAC 9_000)
+                        Oskar `shouldHave` (Ada.adaValueOf 9_000 <> txFee <> Value.assetClassValue Mint.vestingAC 9_000) -- oskar vests 1000 Ada and 1000 vestingToken
+                        Vlad `shouldHave` (Ada.adaValueOf 10_000)
                      )
                      (
                        do
 
-                         -- Oskar mints 
+                         -- Oskar mints vesting Tokens
                          void $ withUser Oskar (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
 
                          execRes <- withUser Oskar $ do
                             (_, startTime) <- lift Contract.currentNodeClientTimeRange
-                            mkVesting [Vlad] (replicate 200 $ Portion startTime (Ada.adaValueOf 5 <> Value.assetClassValue Mint.vestingAC 5))
+                            mkVesting [Vlad] (replicate 200 $ Portion startTime (Ada.adaValueOf 5 <> Value.assetClassValue Mint.vestingAC 5)) -- Input datum have the schedule of 200 portion
 
                          let ((vestingDatum, _), _) = case outcome execRes of
                                                         Left msg -> error (show msg)
@@ -153,7 +154,8 @@ unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
                                          Nothing -> error "Not Possible"
                                          (Just ppkh) -> [unPaymentPubKeyHash ppkh]
 
-                         withUser Vlad $ unlockVesting oref [Vlad] vestingDatum action
+                         withUser Vlad $ unlockVesting oref [Vlad] vestingDatum action -- Vlad tries to unlock tokens locked in the vesting contract but is unsuccessfull
+                                                                                       -- as the this contract exceeds the resource budget.
                      )
-                     [shouldFail]
+                     [shouldFail] -- Due to which the contract fails
 
