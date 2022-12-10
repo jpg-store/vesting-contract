@@ -5,6 +5,8 @@
      TemplateHaskell,
      RankNTypes
 #-}
+{-# LANGUAGE StandaloneDeriving #-}
+{-# OPTIONS_GHC -Wno-orphans #-}
 
 module Utils where
 
@@ -12,15 +14,15 @@ import Plutus.Model
 import Plutus.Model.Validator.V2
 import Canonical.Vesting
 import Plutus.V2.Ledger.Api (PubKeyHash)
-import Control.Monad (replicateM)
-import Plutus.Model.Pretty
 import Test.Tasty
 import Control.Lens
     ( (<&>), view, makeLenses, ReifiedLens(Lens), ReifiedLens' )
 import Control.Monad.Reader
-import qualified Data.Time.Clock.POSIX as Time
 import Plutus.V1.Ledger.Time (POSIXTime)
-import Plutus.V1.Ledger.Interval (from)
+import GHC.Natural (Natural)
+import Text.Pretty.Simple
+import qualified Data.Text.Lazy  as T
+
 
 
 {- PSM Mock Blockchain Setup -}
@@ -57,6 +59,7 @@ data Users = Users {
 
 makeLenses ''Users
 
+
 -- Because we're stuck on a GHC < 9.2.5 we need this to avoid impredicative types errors
 type KnownUser = ReifiedLens' Users PubKeyHash
 
@@ -71,6 +74,9 @@ las = Lens las'
 magnus = Lens magnus'
 oskar = Lens oskar'
 vlad = Lens vlad'
+
+knownUsers :: [KnownUser]
+knownUsers = [andrea,borja,chase,drazen,ellen,george,las,magnus,oskar,vlad]
 
 -- Create our users
 identifyUsers :: Run Users
@@ -107,10 +113,10 @@ adaPortion :: POSIXTime -> Integer -> Portion
 adaPortion t amt = Portion t $ adaValue amt
 
 disburse :: [KnownUser] -> AuditM Action
-disburse users = withUsers users $ pure . Disburse
+disburse usrs = withUsers usrs $ pure . Disburse
 
 mkInput :: [KnownUser] -> Schedule -> AuditM Input
-mkInput users sch = withUsers users $ pure . flip Input sch
+mkInput usrs sch = withUsers usrs $ pure . flip Input sch
 
 
 -- We should run tests in both Inline and Hash modes, this makes signatures less verbose
@@ -130,3 +136,23 @@ inputThat p = p . txBoxDatum
 
 updateInput :: [PubKeyHash] -> Input -> Input
 updateInput bs (Input _ sch) = Input bs sch
+
+(!?) :: [a] -> Natural -> Maybe a
+[]     !? _     = Nothing
+(x:_)  !? 0 = Just x
+(_:xs) !? n = xs !? (n-1)
+
+logTx :: Tx -> Run ()
+logTx = logInfo . T.unpack . pShow
+
+multisignTx :: [PubKeyHash] -> Tx -> Run Tx
+multisignTx usrs tx = foldM (flip signTx) tx usrs
+
+-- orphan instance to help w/ testing
+
+deriving instance Show Portion
+
+type Amount = Integer
+type ToUser = Amount
+type ToScript = Amount
+type Signers = [KnownUser]

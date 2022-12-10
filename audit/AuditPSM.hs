@@ -14,7 +14,7 @@ import Canonical.Vesting
 import Plutus.V2.Ledger.Api (PubKeyHash)
 import Control.Monad.State
 import Control.Monad
-import Plutus.V1.Ledger.Time (POSIXTime, POSIXTimeRange)
+
 import Plutus.V1.Ledger.Interval (from)
 import Utils
 import Data.List (foldl')
@@ -25,6 +25,9 @@ import Test.QuickCheck
 import Text.Pretty.Simple
 
 import qualified Data.Text.Lazy  as T
+
+import Config
+import Plutus.V1.Ledger.Time
 
 type Amount = Integer
 
@@ -98,28 +101,7 @@ unlock' :: KnownUser
         -> AuditM ()
 unlock' = unlock InlineDatum
 
-data DepositConfig = DepositConfig {
-  benefactor      :: !KnownUser,   -- The user who pays initial funds to the script
-  inputAmount     :: !Integer,     -- The amount paid by the benefactor to the script
-  beneficiaries   :: ![KnownUser], -- The users authorized to withdraw from the script
-  deadlineOffset  :: !POSIXTime,   -- The difference between "now" and the deadline for the first portion (and between portions)
-  portions        :: !Integer      -- How many portions will be generated?
-}
 
-data WithdrawConfig = WithdrawConfig {
-  beneficiary      :: !KnownUser,
-  signers          :: ![KnownUser],
-  newBeneficiaries :: ![KnownUser],
-  validStart       :: !POSIXTime,
-  toBeneficiary    :: !Integer,
-  toScript         :: !Integer,
-  oldInput         :: !Input'
-}
-
-type TestConfig = (DepositConfig,[WithdrawConfig])
-
-testConfig :: DepositConfig -> [WithdrawConfig] -> TestConfig
-testConfig = (,)
 
 mkSchedule :: POSIXTime -> POSIXTime -> Integer -> Integer -> Schedule' -> Schedule'
 mkSchedule _ _ _ 0 acc = reverse acc
@@ -143,15 +125,16 @@ mkWithdraw ::  WithdrawConfig -> AuditM ()
 mkWithdraw  WithdrawConfig{..} = do
   lift $ waitUntil (validStart + seconds 10)
   input <- toInput oldInput
-  unlock' beneficiary signers newBeneficiaries input toBeneficiary toScript  (from $ validStart + seconds 10)
+  unlock'
+    beneficiary
+    signers
+    newBeneficiaries
+    input
+    toBeneficiary
+    toScript
+    (from $ validStart + seconds 10)
 
-{-
-mkTest :: TestConfig -> AuditM ()
-mkTest cfg@TestConfig{..} = do
-  (now, input) <- mkDeposit cfg
 
-  mapM_ (mkWithdraw now input) withdrawCfgs
--}
 simpleHappyPath :: TestConfig
 simpleHappyPath = testConfig depositCfg [withdrawCfg]
   where
@@ -172,25 +155,6 @@ simpleHappyPath = testConfig depositCfg [withdrawCfg]
       oldInput = Input' [drazen,chase,vlad] [Portion' (seconds 100) 100]
     }
 
-data Portion' = Portion' {deadline' :: POSIXTime, amount' :: Integer} deriving Show
-
-type Schedule' = [Portion']
-
-data Input' = Input' {
-  beneficiaries' :: [KnownUser],
-  schedule' :: Schedule'
-}
-
-toInput :: Input' -> AuditM Input
-toInput (Input' bs' ps') = do
-  bs <- users bs'
-  let ps =  map (\(Portion' dl amt) -> Portion dl (adaValue amt)) ps'
-  pure $ Input bs ps
-
-updateInput' :: [KnownUser] -> Input' -> Input'
-updateInput' bs (Input' _ sch) = Input' bs sch
-
-
 {- Should suceed properties:
 
 Deposit:
@@ -207,39 +171,19 @@ Withdrawal:
    - output datum == input datum {beneficiaries == newKeys} -- newKeys = arg to disburse
    - locked amount == unvested amount -- *
 
-* a vested portion is one where the deadline is *BEFORE* the validity interval of the transaction
-... so an unvested portion is one where the deadline is *AFTER* the validity interval of the transaction
-
-
-I think this is failing becauase the output datum is == to the original input datum (which is the same for all withdrawals in
-the code here, but shouldn't be) whereas it should be updated with the list of users in the Disburse redeemer
 -}
-
-vested :: POSIXTime -> Schedule' -> Integer
-vested now   = foldl' (\acc p -> amount' p + acc) 0
-                            . filter (\t -> deadline' t < now)
-
-
-unvested :: POSIXTime -> Schedule' -> Integer
-unvested now   = foldl' (\acc p -> amount' p + acc) 0
-                            . filter (\t -> deadline' t >= now)
-
 
 knownUsers :: [KnownUser]
 knownUsers = [andrea,borja,chase,drazen,ellen,george,las,magnus,oskar,vlad]
 
-(!?) :: [a] -> Natural -> Maybe a
-[]     !? _     = Nothing
-(x:_)  !? 0 = Just x
-(_:xs) !? n = xs !? (n-1)
 
 genHappyDepositCfg :: Gen DepositConfig
 genHappyDepositCfg = do
   benefactor'     <- elements knownUsers
-  inputAmt'       <- pure 1000 -- chooseInteger (1,10_000)
+  portions'       <- chooseInteger (1,10)
+  inputAmt'       <- chooseInteger (1,10_000) `suchThat` (\x -> x `div` portions' == 0)
   beneficiaries'  <- sublistOf knownUsers `suchThat` (not . null)
   deadlineOffset' <- seconds <$> arbitrary @Integer `suchThat` (>= 10)
-  portions'       <- pure 2
   pure $ DepositConfig benefactor' inputAmt' beneficiaries' deadlineOffset' portions'
 
 genHappyWithdrawCfg :: Input' -> StateT Natural Gen (Maybe (WithdrawConfig,Input'))
