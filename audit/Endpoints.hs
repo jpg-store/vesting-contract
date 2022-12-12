@@ -86,3 +86,17 @@ runWithdraw  WithdrawConfig{..} = do
     toBeneficiary
     toScript
     (validStart + seconds 200)
+
+
+runWithdrawTooEarly ::  WithdrawConfig -> AuditM ()
+runWithdrawTooEarly  WithdrawConfig{..} = do
+  lift $ waitUntil (validStart - seconds 1)
+  input <- toInput oldInput
+  unlock'
+    beneficiary
+    signers
+    newBeneficiaries
+    input
+    toBeneficiary
+    toScript
+    (validStart - seconds 1)

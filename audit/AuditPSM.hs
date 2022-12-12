@@ -44,3 +44,23 @@ emptyBeneficiariesOnInputTests = expectFail
   <$> auditTests
       "emptyBeneficiariesOnInput"
       (emptyBeneficiariesOnInput <$> genHappyTestConfig)
+
+
+runTestEarlyWithdraw :: TestConfig -> AuditM ()
+runTestEarlyWithdraw (depCfg,ws) = do
+  void $ runDeposit 0 depCfg
+  lift logBalanceSheet
+  runWithdrawals ws
+ where
+   runWithdrawals :: [WithdrawConfig] -> AuditM ()
+   runWithdrawals [] = pure ()
+   runWithdrawals (x:xs) =   runWithdrawTooEarly x >> lift logBalanceSheet >> runWithdrawals xs
+
+tooEarlyTests :: String -> Gen TestConfig -> IO TestTree
+tooEarlyTests name genConfig = do
+  tests <- zip [0..] <$> replicateM 1000 (generate genConfig)
+  let trees = flip map  tests $ \(n,t) -> expectFail $  auditTest  (name <>" #" <> show n) (runTestEarlyWithdraw t)
+  pure $ testGroup (name <> " tests") trees
+
+earlyTests :: IO TestTree
+earlyTests = tooEarlyTests "early withdraw" genHappyTestConfig
