@@ -11,4 +11,4 @@ initialSetup :: String -> Run a -> TestTree
 initialSetup = testNoErrors (adaValue 1_000_000_000) defaultBabbage
 
 main :: IO ()
-main = earlyTests >>= defaultMain
+main = emptyBeneficiariesOnInputTests >>= defaultMain
