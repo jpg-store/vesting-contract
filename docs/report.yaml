@@ -1,0 +1,45 @@
+Composer:
+  
+  # disclaimer  
+  - RawMd:
+      level: 0 
+      link: https://raw.githubusercontent.com/mlabs-haskell/audit-report-template/master/linked-files/disclaimer.md
+
+  - NewPage: 0
+
+  - Header: 
+      level: 1 
+      text: Contents
+    
+  # Audit Background 
+  - Issue:
+      level: 1
+      number: 1
+
+  - NewPage: 0
+
+  - Header:
+      level: 1
+      text: Findings
+
+  - AllIssuesThat:
+      level: 1 
+      filters:
+        - hasLabel: audit
+        - hasLabel: audit-findings
+        - isOpen: true
+          
+  - NewPage: 0
+
+GHAppy:
+
+  - GetLinkedFile:
+      location: Images
+      name: MLabs-logo.jpg
+      link: https://raw.githubusercontent.com/mlabs-haskell/audit-report-template/master/linked-files/images/MLabs-logo.jpg
+      
+  - GetLinkedFile:
+      location: Images
+      name: MLabs-logo-cropped.jpg 
+      link: https://raw.githubusercontent.com/mlabs-haskell/audit-report-template/master/linked-files/images/MLabs-logo-cropped.jpg
+
