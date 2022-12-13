@@ -45,7 +45,7 @@ emptyBeneficiariesOnInput (d,ws) = (d {beneficiaries = []},ws)
 -- not very performant, shouldn't matter that much in practice
 overRandomElem :: (a -> a) -> [a] -> Gen [a]
 overRandomElem f as = do
-  i <- chooseInt (0,length as)
+  i <- chooseInt (0,length as - 1)
   let a  = as !! i
       a' = f a
   pure $ set (ix i) a' as

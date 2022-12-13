@@ -16,7 +16,7 @@ import GHC.Natural
 import Test.QuickCheck
 import Config
 import Endpoints
-import Generators (genHappyTestConfig, emptyBeneficiariesOnInput)
+import Generators
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure
 
@@ -36,6 +36,12 @@ auditTests name genConfig = do
   let trees = flip map  tests $ \(n,t) -> auditTest  (name <>" #" <> show n) (runTestWithConfig t)
   pure $ testGroup (name <> " tests") trees
 
+auditTestsShouldFail :: String -> Gen TestConfig -> IO TestTree
+auditTestsShouldFail name genConfig = do
+  tests <- zip [0..] <$> replicateM 1000 (generate genConfig)
+  let trees = flip map  tests $ \(n,t) -> expectFail $ auditTest  (name <>" #" <> show n) (runTestWithConfig t)
+  pure $ testGroup (name <> " tests") trees
+
 happyTests :: IO TestTree
 happyTests = auditTests "happy" genHappyTestConfig
 
@@ -46,21 +52,7 @@ emptyBeneficiariesOnInputTests = expectFail
       (emptyBeneficiariesOnInput <$> genHappyTestConfig)
 
 
-runTestEarlyWithdraw :: TestConfig -> AuditM ()
-runTestEarlyWithdraw (depCfg,ws) = do
-  void $ runDeposit 0 depCfg
-  lift logBalanceSheet
-  runWithdrawals ws
- where
-   runWithdrawals :: [WithdrawConfig] -> AuditM ()
-   runWithdrawals [] = pure ()
-   runWithdrawals (x:xs) =   runWithdrawTooEarly x >> lift logBalanceSheet >> runWithdrawals xs
-
-tooEarlyTests :: String -> Gen TestConfig -> IO TestTree
-tooEarlyTests name genConfig = do
-  tests <- zip [0..] <$> replicateM 1000 (generate genConfig)
-  let trees = flip map  tests $ \(n,t) -> expectFail $  auditTest  (name <>" #" <> show n) (runTestEarlyWithdraw t)
-  pure $ testGroup (name <> " tests") trees
-
-earlyTests :: IO TestTree
-earlyTests = tooEarlyTests "early withdraw" genHappyTestConfig
+emptyNewBeneficiariesInWithdrawalsTests :: IO TestTree
+emptyNewBeneficiariesInWithdrawalsTests = auditTestsShouldFail
+  "empty beneficiaries in withdrawals"
+  (genHappyTestConfig >>= emptyNewBeneficiariesInWithdrawals)
