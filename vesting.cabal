@@ -23,11 +23,17 @@ common lang
     CPP
     LambdaCase
     DeriveGeneric
+    ImportQualifiedPost
+    NumericUnderscores
+    DerivingStrategies
+    FlexibleContexts
+    StandaloneDeriving
+    RankNTypes
+    FlexibleInstances
 
   ghc-options:
     -Wall -Wcompat -Wincomplete-record-updates
     -Wincomplete-uni-patterns -Wpartial-fields -Wredundant-constraints
-    -Wunused-packages
     -Werror
 
 library
@@ -39,12 +45,12 @@ library
     , bytestring
     , cardano-api
     , containers
+    , plutonomy
     , plutus-ledger-api
     , plutus-tx
     , plutus-tx-plugin
-    , serialise
-    , plutonomy
     , plutus-script-utils
+    , serialise
 
   hs-source-dirs:  src
   ghc-options:
@@ -76,17 +82,21 @@ test-suite vesting-tests
   hs-source-dirs: tests
   other-modules:
     Spec.Vesting
+    Spec.Utils
+    Spec.Setup
   build-depends:
     , base                  >=4.9 && <5
     , bot-plutus-interface
-    , text
     , containers
     , data-default
+    , lens
+    , mtl
     , plutip
-    , plutus-tx
-    , plutus-ledger
-    , plutus-pab
-    , plutus-ledger-constraints
     , plutus-contract
+    , plutus-ledger
+    , plutus-ledger-constraints
+    , plutus-pab
+    , plutus-tx
     , tasty
+    , text
     , vesting

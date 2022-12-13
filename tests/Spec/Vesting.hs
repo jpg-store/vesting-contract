@@ -1,56 +1,82 @@
+{-# OPTIONS_GHC -Wno-incomplete-uni-patterns #-}
 module Spec.Vesting
-  ( mkVesting
-  , toDatum
-  , toRedeemer
-  , getUtxos
+  ( simpleLockVesting
+  , checkVestingUtxoExists
+  , mkAndUnlockVesting
   )
   where
 
-import Data.Text (Text)
-import qualified Data.List.NonEmpty as NonEmpty
-
-import qualified Ledger.Scripts  as Scripts
-import Plutus.PAB.Effects.Contract.Builtin (EmptySchema)
-import qualified Canonical.Vesting as Vesting
-import qualified Ledger.Constraints  as Constraints
-import qualified Plutus.Contract  as Contract
-import Plutus.Contract (Contract, awaitTxConfirmed, submitTx)
-import Ledger (
-  TxId,
-  getCardanoTxId,
-  Datum(Datum),
-  Redeemer(Redeemer),
-  ValidatorHash, Value, TxOutRef, ChainIndexTxOut
- )
-import PlutusTx (toBuiltinData, ToData)
-import Data.Map (Map)
+import Control.Monad (void)
+import Control.Monad.Reader (lift)
+import Canonical.Vesting (Portion(..), Action (..) )
+import Ledger.Ada qualified as Ada
+import Data.Map          qualified as Map
+import Plutus.Contract qualified as Contract
+import Spec.Utils
+import Spec.Setup
+import Test.Plutip.Predicate
+import Test.Plutip.Internal.Types (ExecutionResult(..))
+import Ledger (Value, unPaymentPubKeyHash)
 
 
-mkVesting :: Vesting.Input -> Contract () EmptySchema Text TxId
-mkVesting vestingDatum = do
+simpleLockVesting :: Return
+simpleLockVesting = execVestingTest "Lock vesting contract successfully"
+                   ( do
+                      let vestingTxFee :: Value
+                          vestingTxFee = Ada.lovelaceValueOf (- 156100)
+                      Andrea `shouldHave` (Ada.adaValueOf 9900 <> vestingTxFee)
+                   )
+                   ( withUser Andrea $ do
+                      (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                      mkVesting [Vlad, Borja] [Portion startTime (Ada.adaValueOf 100)]
+                   ) [shouldSucceed]
 
-  let
-      txSK :: Constraints.TxConstraints i o
-      txSK = Constraints.mustPayToOtherScript
-               vestingValHash
-               (toDatum vestingDatum)
-               (mconcat $ Vesting.amount <$> Vesting.schedule vestingDatum)
+checkVestingUtxoExists :: Return
+checkVestingUtxoExists = execVestingTest "Check if vesting utxo exists"
+                        ( do
+                           let vestingTxFee :: Value
+                               vestingTxFee = Ada.lovelaceValueOf (- 153100)
+                           Vlad `shouldHave` (Ada.adaValueOf 9900 <> vestingTxFee)
+                        )
+                       ( do
+                          execRes <- withUser Vlad $ do
+                               (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                               r <- mkVesting [Borja] [Portion startTime (Ada.adaValueOf 100)]
+                               void $ lift $ Contract.waitNSlots 10
+                               return r
 
-  tx <- submitTx txSK
-  awaitTxConfirmed $ getCardanoTxId tx
-  return (getCardanoTxId tx)
+                          case outcome execRes of
+                            (Right ((vestingDatum, _), _)) -> withUser Borja $ findVestingUtxo vestingDatum
+                            (Left _) -> error "Vesting utxo not found"
 
-toDatum :: forall a. ToData a => a -> Datum
-toDatum = Datum . toBuiltinData
+                       )
+                       [shouldSucceed]
 
-toRedeemer :: forall a. ToData a => a -> Redeemer
-toRedeemer = Redeemer . toBuiltinData
+mkAndUnlockVesting :: Return
+mkAndUnlockVesting = execVestingTest "make and unlock vesting successfully"
+                   ( do
+                      let vestingTxFee :: Value
+                          vestingTxFee = Ada.lovelaceValueOf (- 153100)
+                      Andrea `shouldHave` (Ada.adaValueOf 9900 <> vestingTxFee)
+                   )
+                   ( do
+                      execRes <- withUser Andrea $ do
+                        (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                        mkVesting [Borja] [Portion startTime (Ada.adaValueOf 100)]
 
-vestingValHash :: ValidatorHash
-vestingValHash = Scripts.validatorHash Vesting.validator
+                      let (Right ((vestingDatum, _), _)) = outcome execRes
 
+                      execRes2 <- withUser Borja $ findVestingUtxo vestingDatum
 
-getUtxos :: Contract [Value] EmptySchema Text (Map TxOutRef ChainIndexTxOut)
-getUtxos = do
-  addr <- NonEmpty.head <$> Contract.ownAddresses
-  Contract.utxosAt addr
+                      let (Right (Just oref, _)) = outcome execRes2
+
+                      execRes3 <- usersPPkhs
+
+                      let (Right (ppkhs,_)) = outcome execRes3
+                          action = Disburse $ case Map.lookup Borja ppkhs of
+                                      Nothing -> error "Not Possible"
+                                      (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                      withUser Borja $ unlockVesting vestingDatum action oref
+
+                   ) [shouldSucceed]

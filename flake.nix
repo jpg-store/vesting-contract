@@ -6,7 +6,7 @@
     nixpkgs.follows = "plutip/nixpkgs";
     haskell-nix.follows = "plutip/haskell-nix";
 
-    plutip.url = "github:mlabs-haskell/plutip";
+    plutip.url = "github:mlabs-haskell/plutip/7f2d59abd911dd11310404863cdedb2886902ebf";
     plutonomy = {
       url = "github:well-typed/plutonomy/6c01302ba8cf3be4f71617e106cd5ef7ed10fc63";
       flake = false;
