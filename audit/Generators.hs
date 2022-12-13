@@ -36,7 +36,7 @@ Withdrawal:
    - locked amount == unvested amount
 -}
 
-isUnique :: (Eq a, Ord a) => [a] -> Bool
+isUnique :: (Ord a) => [a] -> Bool
 isUnique xs = length xs == S.size (S.fromList xs)
 
 emptyBeneficiariesOnInput :: TestConfig -> TestConfig
