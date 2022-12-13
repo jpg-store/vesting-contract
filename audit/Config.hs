@@ -24,6 +24,10 @@ data WithdrawConfig = WithdrawConfig {
   oldInput         :: !Input'
 }
 
+totalLocked :: [WithdrawConfig] -> Integer
+totalLocked [] = 0
+total (WithdrawConfig{..}:ws) = toBeneficiary + total ws
+
 type TestConfig = (DepositConfig,[WithdrawConfig])
 
 testConfig :: DepositConfig -> [WithdrawConfig] -> TestConfig

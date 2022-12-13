@@ -56,3 +56,9 @@ emptyNewBeneficiariesInWithdrawalsTests :: IO TestTree
 emptyNewBeneficiariesInWithdrawalsTests = auditTestsShouldFail
   "empty beneficiaries in withdrawals"
   (genHappyTestConfig >>= emptyNewBeneficiariesInWithdrawals)
+
+
+randomWithdrawTooEarly :: IO TestTree
+randomWithdrawTooEarly = auditTestsShouldFail
+  "single random early withdrawal in sequence"
+  (genHappyTestConfig >>= withdrawTooEarly)

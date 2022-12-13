@@ -59,6 +59,9 @@ emptyNewBeneficiariesInWithdrawals = overRandomWithdrawConfig $ \w -> w {newBene
 emptySignersInWithdrawals :: TestConfig -> Gen TestConfig
 emptySignersInWithdrawals = overRandomWithdrawConfig $ \w -> w {signers = []}
 
+withdrawTooEarly :: TestConfig -> Gen TestConfig
+withdrawTooEarly = overRandomWithdrawConfig $ \w@WithdrawConfig{..} ->
+  w {validStart = validStart - seconds 201}
 
 
 type Seconds = Integer
