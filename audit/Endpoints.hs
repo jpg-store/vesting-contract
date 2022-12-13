@@ -61,7 +61,7 @@ unlock mode usr' signers' newBeneficiaries input toUser toScript iv =  do
     let tx' =  mconcat [ spendScript vestingScript ref redeemer input
                        , payToScript vestingScript (mode outDatum) (adaValue toScript)
                        , payToKey beneficiary (adaValue toUser) ]
-    tx <- multisignTx (beneficiary:signers) =<< validateIn (from $ iv) tx'
+    tx <- multisignTx (signers) =<< validateIn (from $ iv) tx'
     submitTx beneficiary tx
 
 unlock' :: KnownUser

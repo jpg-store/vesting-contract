@@ -103,6 +103,7 @@ genHappyWithdrawCfg inp@(Input' bs ps) = get >>= \i -> case ps !? i of
         cfg = WithdrawConfig beneficiary signatories newBeneficiaries dl amt  (max 0 (locked - amt)) inp
     pure . Just $ (cfg, newInput)
 
+
 genHappyTestConfig :: Gen TestConfig
 genHappyTestConfig = do
   depCfg@DepositConfig{..} <- genHappyDepositCfg
@@ -114,6 +115,46 @@ genHappyTestConfig = do
    genHappyWithdrawals inp = genHappyWithdrawCfg inp >>= \case
      Nothing -> pure []
      Just (cfg,newInp) -> (cfg:) <$> genHappyWithdrawals newInp
+
+-- for testing insufficient signatures
+genDepositCfgNS :: Gen DepositConfig
+genDepositCfgNS = do
+  benefactor'     <- elements knownUsers
+  inputAmt'       <- chooseInteger (1,10_000)
+  let portions'  = [Portion' (seconds 100) inputAmt']
+  beneficiaries'  <- sublistOf knownUsers `suchThat` (\xs -> length xs > 1)
+  pure $ DepositConfig
+           benefactor'
+           inputAmt'
+           beneficiaries'
+           (seconds 100)
+           portions'
+
+genWithdrawNotEnoughSigners :: Input' -> StateT Natural Gen (Maybe (WithdrawConfig,Input'))
+genWithdrawNotEnoughSigners (Input' [] _) = pure Nothing
+genWithdrawNotEnoughSigners (Input' _ []) = pure Nothing
+genWithdrawNotEnoughSigners inp@(Input' bs ps) = get >>= \i -> case ps !? i of
+  Nothing -> pure Nothing
+  Just (Portion' dl amt) ->  modify' (+1) >>  do
+    beneficiary      <- lift $ elements bs
+    newBeneficiaries <- lift $ sublistOf knownUsers `suchThat` (\us -> length us > 1)
+    signatories      <- lift $ sublistOf bs `suchThat` (\ss -> length ss < length bs `div` 2)
+    let newInput = updateInput' newBeneficiaries inp
+        locked = unvested dl ps
+        cfg = WithdrawConfig beneficiary signatories newBeneficiaries dl amt  (max 0 (locked - amt)) inp
+    pure . Just $ (cfg, newInput)
+
+genTestConfigNotEnoughSigners :: Gen TestConfig
+genTestConfigNotEnoughSigners = do
+  depCfg@DepositConfig{..} <- genDepositCfgNS
+  let inp = Input' beneficiaries portions
+  withdrawals <- flip evalStateT 0 $ genWithdrawals' inp
+  pure (depCfg,withdrawals)
+ where
+   genWithdrawals' :: Input' -> StateT Natural Gen [WithdrawConfig]
+   genWithdrawals' inp = genWithdrawNotEnoughSigners inp >>= \case
+     Nothing -> pure []
+     Just (cfg,newInp) -> (cfg:) <$> genWithdrawals' newInp
 
 -- maybe move this somewhere else?
 simpleHappyPath :: TestConfig

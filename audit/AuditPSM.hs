@@ -42,6 +42,8 @@ auditTestsShouldFail name genConfig = do
   let trees = flip map  tests $ \(n,t) -> expectFail $ auditTest  (name <>" #" <> show n) (runTestWithConfig t)
   pure $ testGroup (name <> " tests") trees
 
+
+
 happyTests :: IO TestTree
 happyTests = auditTests "happy" genHappyTestConfig
 
@@ -62,3 +64,8 @@ randomWithdrawTooEarly :: IO TestTree
 randomWithdrawTooEarly = auditTestsShouldFail
   "single random early withdrawal in sequence"
   (genHappyTestConfig >>= withdrawTooEarly)
+
+insufficientSigTests :: IO TestTree
+insufficientSigTests = auditTestsShouldFail
+  "withdrawal tx without sufficient signatures"
+  (resize 1 $ genTestConfigNotEnoughSigners)

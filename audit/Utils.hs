@@ -61,19 +61,25 @@ makeLenses ''Users
 
 
 -- Because we're stuck on a GHC < 9.2.5 we need this to avoid impredicative types errors
-type KnownUser = ReifiedLens' Users PubKeyHash
+data  KnownUser = KnownUser String (ReifiedLens' Users PubKeyHash)
+
+instance Eq KnownUser where
+  (KnownUser a _) == (KnownUser b _) = a == b
+
+instance Ord KnownUser where
+  (KnownUser a _) <= (KnownUser b _) = a <= b
 
 andrea, borja, chase, drazen, ellen, george, las, magnus, oskar, vlad :: KnownUser
-andrea = Lens andrea'
-borja = Lens borja'
-chase = Lens chase'
-drazen = Lens drazen'
-ellen = Lens ellen'
-george = Lens george'
-las = Lens las'
-magnus = Lens magnus'
-oskar = Lens oskar'
-vlad = Lens vlad'
+andrea = KnownUser "andrea" $ Lens andrea'
+borja  = KnownUser "borja"  $ Lens borja'
+chase  = KnownUser "chase"  $ Lens chase'
+drazen = KnownUser "drazen" $ Lens drazen'
+ellen  = KnownUser "ellen"  $ Lens ellen'
+george = KnownUser "george" $ Lens george'
+las    = KnownUser "las"    $ Lens las'
+magnus = KnownUser "magnus" $ Lens magnus'
+oskar  = KnownUser "oskar"  $ Lens oskar'
+vlad   = KnownUser "vlad"   $ Lens vlad'
 
 knownUsers :: [KnownUser]
 knownUsers = [andrea,borja,chase,drazen,ellen,george,las,magnus,oskar,vlad]
@@ -96,7 +102,7 @@ auditTest :: String -> AuditM () -> TestTree
 auditTest msg ma = mkTestTree msg (runAuditM ma)
 
 user :: KnownUser -> AuditM PubKeyHash
-user (Lens u) = ask <&> view u
+user (KnownUser _ (Lens u)) = ask <&> view u
 
 users :: [KnownUser] -> AuditM [PubKeyHash]
 users usrs = withUsers usrs pure
