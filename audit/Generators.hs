@@ -50,14 +50,24 @@ overRandomElem f as = do
       a' = f a
   pure $ set (ix i) a' as
 
+overRandomElemCut :: (a -> a) -> [a] -> Gen [a]
+overRandomElemCut f as = do
+  i <- chooseInt (0,length as - 1)
+  let a  = as !! i
+      a' = f a
+  pure . take (i+1) $ set (ix i) a' as
+
+overRandomWithdrawConfigCut :: (WithdrawConfig -> WithdrawConfig) -> TestConfig -> Gen TestConfig
+overRandomWithdrawConfigCut f (d,ws) = overRandomElemCut f ws >>= \ws' -> pure (d,ws')
+
+emptyNewBeneficiariesInWithdrawals :: TestConfig -> Gen TestConfig
+emptyNewBeneficiariesInWithdrawals = overRandomWithdrawConfigCut $ \w -> w {newBeneficiaries = []}
+
 overRandomWithdrawConfig :: (WithdrawConfig -> WithdrawConfig) -> TestConfig -> Gen TestConfig
 overRandomWithdrawConfig f (d,ws) = overRandomElem f ws >>= \ws' -> pure (d,ws')
 
-emptyNewBeneficiariesInWithdrawals :: TestConfig -> Gen TestConfig
-emptyNewBeneficiariesInWithdrawals = overRandomWithdrawConfig $ \w -> w {newBeneficiaries = []}
-
 emptySignersInWithdrawals :: TestConfig -> Gen TestConfig
-emptySignersInWithdrawals = overRandomWithdrawConfig $ \w -> w {signers = []}
+emptySignersInWithdrawals = overRandomWithdrawConfigCut $ \w -> w {signers = []}
 
 
 
