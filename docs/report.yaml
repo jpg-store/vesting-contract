@@ -1,26 +1,28 @@
 Composer:
-  
-  # disclaimer  
+
+#-------------------------------------------------------------------------------  
+# Disclaimer  
   - RawMd:
       level: 0 
       link: https://raw.githubusercontent.com/mlabs-haskell/audit-report-template/master/linked-files/disclaimer.md
 
   - NewPage: 0
-
-  - Header: 
-      level: 1 
-      text: Contents
-    
-  # Audit Background 
+#-------------------------------------------------------------------------------
+# Audit Background 
   - Issue:
-      level: 1
+      level: 0
       number: 1
 
   - NewPage: 0
-
+#-------------------------------------------------------------------------------  
+# Findings 
   - Header:
       level: 1
       text: Findings
+
+  - Issue: # Summary
+      level: 1
+      number: 20
 
   - AllIssuesThat:
       level: 1 
@@ -28,8 +30,39 @@ Composer:
         - hasLabel: audit
         - hasLabel: audit-findings
         - isOpen: true
-          
+
+  - AllIssuesThat:
+      level: 1 
+      filters:
+        - hasLabel: audit
+        - hasLabel: recommendation
+        - isOpen: true
+
   - NewPage: 0
+#-------------------------------------------------------------------------------
+  # Testing
+  - Issue:
+      level: 0
+      number: 21
+
+  - NewPage: 0
+#-------------------------------------------------------------------------------
+  # Conclusion
+  - Issue:
+      level: 0
+      number: 22
+
+  - NewPage: 0
+#-------------------------------------------------------------------------------
+# Appendix
+  # Findings 
+  - Header:
+      level: 1
+      text: Appendix
+
+  - RawMd:
+      level: 1
+      link: https://raw.githubusercontent.com/mlabs-haskell/audit-report-template/master/linked-files/vulnerability-types.md
 
 GHAppy:
 
