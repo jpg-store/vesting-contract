@@ -26,7 +26,7 @@ ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary
 ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary3-pkh.txt)"
 
 nowSeconds="$(date +%s)"
-lovelaces=0
+lovelaces=2017080
 
 for i in "$@"; do
   timestamp=$(($nowSeconds+$i))
@@ -54,7 +54,8 @@ find $tempDir/$BLOCKCHAIN_PREFIX/datums -name "*.json" \
 
 
 $baseDir/core/lock-tx.sh \
-  $(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr) \
-  ~/$BLOCKCHAIN_PREFIX/benefactor.skey \
+  $(cat $tempDir/$BLOCKCHAIN_PREFIX/benefactor.addr) \
+  $tempDir/$BLOCKCHAIN_PREFIX/benefactor.skey \
   $(cat $DATUM_HASH_FILE) \
-  "$lovelaces lovelace"
+  "$lovelaces lovelace" \
+  txout

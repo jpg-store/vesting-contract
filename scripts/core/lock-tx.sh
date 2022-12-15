@@ -32,9 +32,9 @@ cardano-cli transaction build \
     $(cardano-cli-balance-fixer input --address $benefactorAddress $BLOCKCHAIN) \
     --tx-out "$scriptHash + $output" \
     --tx-out-datum-hash $scriptDatumHash \
-    --tx-out "$benefactorAddress + 1744798 lovelace $extraOutput" \
+    --tx-out "$benefactorAddress + 999920 lovelace $extraOutput" \
     --change-address $benefactorAddress \
-    --protocol-params-file scripts/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
+    --protocol-params-file $baseDir/$BLOCKCHAIN_PREFIX/protocol-parameters.json \
     --out-file $bodyFile
 
 echo "saved transaction to $bodyFile"
