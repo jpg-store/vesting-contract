@@ -1,5 +1,0 @@
-{
-    "type": "PaymentSigningKeyShelley_ed25519",
-    "description": "Payment Signing Key",
-    "cborHex": "58209c0a227dbd3ab057dae41c8aecfd5dc3afc622fd27ce646dace109e63cd5c4cd"
-}
