@@ -1,14 +1,15 @@
 {-# LANGUAGE DerivingStrategies #-}
 {-# LANGUAGE NumericUnderscores #-}
+{-# OPTIONS_GHC -Wno-incomplete-patterns #-}
 
 module Main (main) where
 
 import Control.Monad.IO.Class (liftIO)
-import Control.Monad.Reader (ReaderT (ReaderT), ask, lift)
+import Control.Monad.Reader (ReaderT (ReaderT))
 import Control.Monad (void)
 import Data.Default (def)
 import Test.Plutip.Internal.BotPlutusInterface.Wallet (
-  BpiWallet,
+  BpiWallet (..),
   addSomeWallet,
   mkMainnetAddress,
   walletPkh,
@@ -22,27 +23,23 @@ import Test.Plutip.Internal.Types (
   nodeSocket,
  )
 import Test.Plutip.Tools.ChainIndex qualified as CI
-import Data.Time (NominalDiffTime)
 import Test.Plutip.Config (PlutipConfig)
-import Numeric.Positive (Positive)
+import System.Directory
 
 main :: IO ()
 main = do
   let
-      slotLen :: NominalDiffTime
-      slotLen = 0.2
+      slotLen = 2
 
       plutipConfig :: PlutipConfig
       plutipConfig = def
 
-      addSomeWalletWithCollateral :: [Positive] -> ReaderT ClusterEnv IO BpiWallet
       addSomeWalletWithCollateral funds =
         addSomeWallet (toAda 10 : funds)
 
       numWallets :: Int
       numWallets = 5
 
-      walletFunds :: [[Positive]]
       walletFunds = replicate numWallets [toAda 10_000]
 
   putStrLn "Starting cluster..."
@@ -57,6 +54,9 @@ main = do
     separate
 
     mapM_ printWallet $ zip wallets [1..]
+    printNodeRelatedInfo
+
+    liftIO (setupwallets wallets)
 
 
   putStrLn "Cluster is running. Press Enter to stop."
@@ -64,16 +64,27 @@ main = do
   putStrLn "Stopping cluster"
 
   stopCluster st
+  removeDirectoryRecursive "./temp"
 
   where
 
-    mkscript :: [BpiWallet] -> ReaderT ClusterEnv IO ()
-    mkscript wallets = do
-      cEnv <- ask
+    basePath :: String
+    basePath = "./temp/mainnet"
 
-      let nodeSocketPath = last $ words $ show $ nodeSocket cEnv
+    setupwallets :: [BpiWallet] -> IO ()
+    setupwallets (x:xs) = do
+      createDirectoryIfMissing True basePath
+      setupwallet "benefactor" x
 
-      return ()
+      let walletNames = zipWith (\n y -> y ++ show n) [( 1 :: Int )..] (replicate (length xs) "beneficiary")
+      mapM_ (uncurry setupwallet) $ zip walletNames xs
+
+    setupwallet :: String -> BpiWallet -> IO ()
+    setupwallet name wallet = do
+      writeFile (basePath ++ name ++ "-pkh.txt") $ show (walletPkh wallet)
+      writeFile (basePath ++ name ++ ".addr") (mkMainnetAddress wallet)
+      writeFile (basePath ++ name ++ ".skey") $ show (signKey wallet)
+ 
 
     printNodeRelatedInfo = ReaderT $ \cEnv -> do
       putStrLn $ "Node socket: " <> last (words $ show (nodeSocket cEnv))

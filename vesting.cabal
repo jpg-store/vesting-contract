@@ -83,6 +83,32 @@ executable vesting-sc
     , optparse-generic
     , text
 
+executable cluster
+  import:         lang
+  hs-source-dirs: local-cluster
+  main-is:        Main.hs
+  ghc-options:    -threaded -rtsopts -with-rtsopts=-T
+  build-depends:
+    , base                  >=4.9 && <5
+    , bot-plutus-interface
+    , containers
+    , data-default
+    , directory
+    , lens
+    , mtl
+    , plutip
+    , plutus-contract
+    , plutus-ledger
+    , plutus-ledger-api
+    , plutus-ledger-constraints
+    , plutus-pab
+    , plutus-script-utils
+    , plutus-tx
+    , plutus-tx-plugin
+    , tasty
+    , text
+    , vesting
+
 test-suite vesting-tests
   import:         lang
   type:           exitcode-stdio-1.0
