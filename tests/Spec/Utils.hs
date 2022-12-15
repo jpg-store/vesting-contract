@@ -5,8 +5,10 @@ module Spec.Utils
   , totalValueInInput
   , findVestingUtxo
   , mkVesting
+  , mkVesting'
   , getVestingUtxos
   , unlockVesting
+  , unlockVesting'
   , usersPPkhs
   , mintNativeTokens
   )
@@ -55,6 +57,21 @@ mkVesting users schedule = do
   lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
   return (vestingDatum, Ledger.getCardanoTxId txId)
 
+mkVesting' :: [User] -> Schedule -> Value -> AuditM (Input,TxId)
+mkVesting' users schedule val = do
+  ppkhs <- asks (fmap Ledger.unPaymentPubKeyHash . fromUsers (`elem` users))
+
+  let vestingDatum = Input ppkhs schedule
+
+      txSK = Constraints.mustPayToOtherScriptWithInlineDatum
+               Vesting.vestingValHash
+               (toDatum vestingDatum)
+               val
+
+  txId <- lift $ submitBpiTxConstraintsWith @Void mempty txSK []
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  return (vestingDatum, Ledger.getCardanoTxId txId)
+
 unlockVesting :: TxOutRef -> [User] -> Input -> Action -> AuditM (Input, TxId)
 unlockVesting oref users input action = do
 
@@ -75,6 +92,39 @@ unlockVesting oref users input action = do
         [ Constraints.mustSpendScriptOutput oref (toRedeemer action)
         , Constraints.mustPayToOtherScriptWithDatumInTx Vesting.vestingValHash (toDatum newInput) mempty
         , Constraints.mustPayToPubKey firstUser (vestedValue validationTime newInput)
+        , mconcat (map Constraints.mustBeSignedBy ppkhs)
+        ]
+
+      lkps = mconcat
+        [ Constraints.unspentOutputs utxos
+        , Constraints.otherScript (Versioned Vesting.vestingValidator PlutusV2)
+        ]
+
+  txId <- lift $ submitBpiTxConstraintsWith @Vesting lkps txSk (mustValidateInFixed validationTime)
+
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  pure (newInput, Ledger.getCardanoTxId txId)
+
+unlockVesting' :: TxOutRef -> [User] -> Input -> Action -> Value -> AuditM (Input, TxId)
+unlockVesting' oref users input action val = do
+
+  void $ lift $ Contract.waitNSlots 5
+
+  utxos <- getVestingUtxos
+  ppkhs <- mapM userPPkh users
+  (_, startTime) <- lift Contract.currentNodeClientTimeRange
+
+  let
+      firstUser = head ppkhs
+      newInput = input{beneficiaries=newBenficiaries}
+      (Disburse newBenficiaries) = action
+      validationTime = Ledger.from startTime
+
+
+      txSk = mconcat
+        [ Constraints.mustSpendScriptOutput oref (toRedeemer action)
+        , Constraints.mustPayToOtherScriptWithDatumInTx Vesting.vestingValHash (toDatum newInput) mempty
+        , Constraints.mustPayToPubKey firstUser val
         , mconcat (map Constraints.mustBeSignedBy ppkhs)
         ]
 

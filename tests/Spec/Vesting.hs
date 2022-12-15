@@ -6,6 +6,7 @@ module Spec.Vesting
   , nativeTokenVesting
   , unboundedDatum
   , multiUserVesting
+  , negativeValueDatum
   )
   where
 
@@ -22,6 +23,8 @@ import Test.Plutip.Internal.Types (ExecutionResult(..))
 import Ledger (Value, unPaymentPubKeyHash)
 import Spec.Mint qualified as Mint
 import Ledger.Value qualified as Value
+import Ledger.TimeSlot (slotToEndPOSIXTime)
+import Plutus.ChainIndex.Config (cicSlotConfig, defaultConfig)
 
 
 simpleLockVesting :: VestingTest
@@ -149,9 +152,58 @@ multiUserVesting = execVestingTest "Make vesting to multiple pubKeyHash(es)"
                                          Nothing -> error "Not Possible"
                                          (Just ppkh) -> [unPaymentPubKeyHash ppkh]
 
-                         withUser Vlad $ unlockVesting oref [Vlad, Oskar, Magnus] vestingDatum action
+                         withUser Oskar $ unlockVesting oref [Vlad, Vlad, Vlad] vestingDatum action
                     )
                     [shouldSucceed]
+
+negativeValueDatum :: VestingTest
+negativeValueDatum = execVestingTest "Use Negative amount of value in the `Input` datum as vesting"
+                    (do
+                        Drazen `shouldHave` (Ada.adaValueOf 9_000 <> Value.assetClassValue Mint.vestingAC 9_000 <> Ada.lovelaceValueOf (-572413))
+                        Vlad `shouldHave` (Ada.adaValueOf 11_000 <> Value.assetClassValue Mint.vestingAC 1_000) -- Vlad takes the locked value i.e. 1000 Ada and 1000 vestingToken
+                                                                                                                 -- from the contract even before the deadline has passed.
+                    )
+                    (do
+                         void $ withUser Drazen (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
+
+                         let vestedValue = Ada.adaValueOf 1000 <> Value.assetClassValue Mint.vestingAC 1000
+
+
+                         execRes <- withUser Drazen $ do
+                            currentSlot <- lift Contract.currentNodeClientSlot
+
+                            let t1 = currentSlot + 1_000 -- current slot + 1000 slot
+                                t2 = t1 + 1_000-- t1 + 1000 slot
+                                slotConfig = cicSlotConfig defaultConfig
+
+                            mkVesting' [Vlad, Oskar, Magnus, Ellen]
+                                       [ Portion (slotToEndPOSIXTime slotConfig t1) (Ada.adaValueOf (-1000) <> Value.assetClassValue Mint.vestingAC (-1000)) -- Add negative amount of ada and vestingToken
+                                       , Portion (slotToEndPOSIXTime slotConfig t2) vestedValue ]
+                                       vestedValue -- only lock amount of value i.e 1000 Ada and 1000 vestingToken
+
+                         let ((vestingDatum, _), _) = case outcome execRes of
+                                                        Left msg -> error (show msg)
+                                                        Right res -> res
+
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Just oref, _) = case outcome execRes2 of
+                                                Left msg -> error (show msg)
+                                                Right res -> res
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Oskar $ unlockVesting' oref [Vlad, Magnus, Oskar] vestingDatum action vestedValue -- Beneficiaries are able to unlock the locked vestedValue
+                                                                                                                    -- even before the deadline has passed.
+                    )
+                    [shouldSucceed]
+
 
 unboundedDatum :: VestingTest
 unboundedDatum = execVestingTest "Test for an upperbound of the input datum"

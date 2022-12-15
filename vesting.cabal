@@ -102,6 +102,7 @@ test-suite vesting-tests
     , lens
     , mtl
     , plutip
+    , plutus-chain-index
     , plutus-contract
     , plutus-ledger
     , plutus-ledger-api
