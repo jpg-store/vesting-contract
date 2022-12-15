@@ -19,6 +19,7 @@ import Endpoints
 import Generators
 import Test.Tasty (TestTree, testGroup)
 import Test.Tasty.ExpectedFailure
+import Data.Bifunctor
 
 runTestWithConfig :: TestConfig -> AuditM ()
 runTestWithConfig (depCfg,ws) = do
@@ -68,4 +69,4 @@ randomWithdrawTooEarly = auditTestsShouldFail
 insufficientSigTests :: IO TestTree
 insufficientSigTests = auditTestsShouldFail
   "withdrawal tx without sufficient signatures"
-  (resize 1 $ genTestConfigNotEnoughSigners)
+  (second (take 1) <$> genTestConfigNotEnoughSigners)
