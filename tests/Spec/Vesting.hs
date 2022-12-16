@@ -3,6 +3,10 @@ module Spec.Vesting
   ( simpleLockVesting
   , checkVestingUtxoExists
   , mkAndUnlockVesting
+  , nativeTokenVesting
+  , unboundedDatum
+  , multiUserVesting
+  , negativeValueDatum
   )
   where
 
@@ -17,9 +21,13 @@ import Spec.Setup
 import Test.Plutip.Predicate
 import Test.Plutip.Internal.Types (ExecutionResult(..))
 import Ledger (Value, unPaymentPubKeyHash)
+import Spec.Mint qualified as Mint
+import Ledger.Value qualified as Value
+import Ledger.TimeSlot (slotToEndPOSIXTime)
+import Plutus.ChainIndex.Config (cicSlotConfig, defaultConfig)
 
 
-simpleLockVesting :: Return
+simpleLockVesting :: VestingTest
 simpleLockVesting = execVestingTest "Lock vesting contract successfully"
                    ( do
                       let vestingTxFee :: Value
@@ -31,7 +39,7 @@ simpleLockVesting = execVestingTest "Lock vesting contract successfully"
                       mkVesting [Vlad, Borja] [Portion startTime (Ada.adaValueOf 100)]
                    ) [shouldSucceed]
 
-checkVestingUtxoExists :: Return
+checkVestingUtxoExists :: VestingTest
 checkVestingUtxoExists = execVestingTest "Check if vesting utxo exists"
                         ( do
                            let vestingTxFee :: Value
@@ -52,12 +60,13 @@ checkVestingUtxoExists = execVestingTest "Check if vesting utxo exists"
                        )
                        [shouldSucceed]
 
-mkAndUnlockVesting :: Return
+mkAndUnlockVesting :: VestingTest
 mkAndUnlockVesting = execVestingTest "make and unlock vesting successfully"
                    ( do
                       let vestingTxFee :: Value
                           vestingTxFee = Ada.lovelaceValueOf (- 153100)
-                      Andrea `shouldHave` (Ada.adaValueOf 9900 <> vestingTxFee)
+                      Andrea `shouldHave` (Ada.adaValueOf 9900 <> vestingTxFee) -- Andrea vests 100 Ada
+                      Borja `shouldHave` (Ada.adaValueOf 10_100  <> Ada.lovelaceValueOf (-1779479)) -- Borja takes the vested ada
                    )
                    ( do
                       execRes <- withUser Andrea $ do
@@ -77,6 +86,160 @@ mkAndUnlockVesting = execVestingTest "make and unlock vesting successfully"
                                       Nothing -> error "Not Possible"
                                       (Just ppkh) -> [unPaymentPubKeyHash ppkh]
 
-                      withUser Borja $ unlockVesting vestingDatum action oref
-
+                      withUser Borja $ unlockVesting oref [Borja] vestingDatum action
                    ) [shouldSucceed]
+
+nativeTokenVesting :: VestingTest
+nativeTokenVesting = execVestingTest "make and unlock vesting of native tokens successfully"
+                     (do
+                        let vestingTxFee :: Value
+                            vestingTxFee = Ada.lovelaceValueOf (-388813 + (-162700))
+                        Oskar `shouldHave` (Ada.adaValueOf 9_900 <> vestingTxFee)
+                        Vlad `shouldHave` (Ada.adaValueOf 10_100 <> Value.assetClassValue Mint.vestingAC 10_000 <> Ada.lovelaceValueOf (-1793033)) -- Vlad Takes vested native token + Ada
+                     )
+                     (
+                       do
+                         void $ withUser Oskar (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash "VestingToken")
+
+                         execRes <- withUser Oskar $ do
+                            (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                            mkVesting [Vlad] [Portion startTime (Ada.adaValueOf 100 <> Value.assetClassValue Mint.vestingAC 10_000)]
+
+                         let (Right ((vestingDatum, _), _)) = outcome execRes
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Right (Just oref, _)) = outcome execRes2
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Vlad $ unlockVesting oref [Vlad] vestingDatum action
+                     )
+                     [shouldSucceed]
+
+multiUserVesting :: VestingTest
+multiUserVesting = execVestingTest "Make vesting to multiple pubKeyHash(es)"
+                    (do
+                        Drazen `shouldHave` (Ada.adaValueOf 9_000 <> Value.assetClassValue Mint.vestingAC 9_000 <> Ada.lovelaceValueOf (-565413))
+                    )
+                    (do
+                         void $ withUser Drazen (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
+
+                         execRes <- withUser Drazen $ do
+                            (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                            mkVesting [Vlad, Oskar, Magnus, Ellen] [Portion startTime (Ada.adaValueOf 1000 <> Value.assetClassValue Mint.vestingAC 1000)]
+
+                         let ((vestingDatum, _), _) = case outcome execRes of
+                                                        Left msg -> error (show msg)
+                                                        Right res -> res
+
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Just oref, _) = case outcome execRes2 of
+                                                Left msg -> error (show msg)
+                                                Right res -> res
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Oskar $ unlockVesting oref [Vlad, Vlad, Vlad] vestingDatum action
+                    )
+                    [shouldSucceed]
+
+negativeValueDatum :: VestingTest
+negativeValueDatum = execVestingTest "Use Negative amount of value in the `Input` datum as vesting"
+                    (do
+                        Drazen `shouldHave` (Ada.adaValueOf 9_000 <> Value.assetClassValue Mint.vestingAC 9_000 <> Ada.lovelaceValueOf (-572413))
+                        Vlad `shouldHave` (Ada.adaValueOf 11_000 <> Value.assetClassValue Mint.vestingAC 1_000) -- Vlad takes the locked value i.e. 1000 Ada and 1000 vestingToken
+                                                                                                                 -- from the contract even before the deadline has passed.
+                    )
+                    (do
+                         void $ withUser Drazen (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
+
+                         let vestedValue = Ada.adaValueOf 1000 <> Value.assetClassValue Mint.vestingAC 1000
+
+
+                         execRes <- withUser Drazen $ do
+                            currentSlot <- lift Contract.currentNodeClientSlot
+
+                            let t1 = currentSlot + 1_000 -- current slot + 1000 slot
+                                t2 = t1 + 1_000-- t1 + 1000 slot
+                                slotConfig = cicSlotConfig defaultConfig
+
+                            mkVesting' [Vlad, Oskar, Magnus, Ellen]
+                                       [ Portion (slotToEndPOSIXTime slotConfig t1) (Ada.adaValueOf (-1000) <> Value.assetClassValue Mint.vestingAC (-1000)) -- Add negative amount of ada and vestingToken
+                                       , Portion (slotToEndPOSIXTime slotConfig t2) vestedValue ]
+                                       vestedValue -- only lock amount of value i.e 1000 Ada and 1000 vestingToken
+
+                         let ((vestingDatum, _), _) = case outcome execRes of
+                                                        Left msg -> error (show msg)
+                                                        Right res -> res
+
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Just oref, _) = case outcome execRes2 of
+                                                Left msg -> error (show msg)
+                                                Right res -> res
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Oskar $ unlockVesting' oref [Vlad, Magnus, Oskar] vestingDatum action vestedValue -- Beneficiaries are able to unlock the locked vestedValue
+                                                                                                                    -- even before the deadline has passed.
+                    )
+                    [shouldSucceed]
+
+
+unboundedDatum :: VestingTest
+unboundedDatum = execVestingTest "Test for an upperbound of the input datum"
+                     (do
+                        let txFee :: Value
+                            txFee = Ada.lovelaceValueOf (-388813 + (-1500800)) -- Fee for Minting policy and submitting tx for vesting.
+                        Oskar `shouldHave` (Ada.adaValueOf 9_000 <> txFee <> Value.assetClassValue Mint.vestingAC 9_000)
+                     )
+                     (
+                       do
+
+                         -- Oskar mints native tokens
+                         void $ withUser Oskar (mintNativeTokens Mint.mintingPolicy Mint.mintingPolicyHash Mint.vestingToken)
+
+                         execRes <- withUser Oskar $ do
+                            (_, startTime) <- lift Contract.currentNodeClientTimeRange
+                            mkVesting [Vlad] (replicate 200 $ Portion startTime (Ada.adaValueOf 5 <> Value.assetClassValue Mint.vestingAC 5))
+
+                         let ((vestingDatum, _), _) = case outcome execRes of
+                                                        Left msg -> error (show msg)
+                                                        Right res -> res
+
+
+                         execRes2 <- withUser Vlad $ findVestingUtxo vestingDatum
+
+                         let (Just oref, _) = case outcome execRes2 of
+                                                Left msg -> error (show msg)
+                                                Right res -> res
+
+                         execRes3 <- usersPPkhs
+
+                         let (Right (ppkhs,_)) = outcome execRes3
+                             action = Disburse $ case Map.lookup Vlad ppkhs of
+                                         Nothing -> error "Not Possible"
+                                         (Just ppkh) -> [unPaymentPubKeyHash ppkh]
+
+                         withUser Vlad $ unlockVesting oref [Vlad] vestingDatum action
+                     )
+                     [shouldFail]

@@ -5,9 +5,12 @@ module Spec.Utils
   , totalValueInInput
   , findVestingUtxo
   , mkVesting
+  , mkVesting'
   , getVestingUtxos
   , unlockVesting
+  , unlockVesting'
   , usersPPkhs
+  , mintNativeTokens
   )
   where
 
@@ -24,7 +27,11 @@ import Ledger
       Value,
       ChainIndexTxOut(ScriptChainIndexTxOut),
       Datum(..),
-      Redeemer(Redeemer), Versioned (..), Language (PlutusV2), unPaymentPubKeyHash
+      Redeemer(Redeemer),
+      Versioned (..),
+      Language (PlutusV2),
+      MintingPolicy,
+      MintingPolicyHash, TokenName, PaymentPubKeyHash, POSIXTimeRange
     )
 import Ledger qualified
 import Ledger.Constraints qualified as Constraints
@@ -50,35 +57,86 @@ mkVesting users schedule = do
   lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
   return (vestingDatum, Ledger.getCardanoTxId txId)
 
-unlockVesting :: Input -> Action -> TxOutRef -> AuditM (Input,TxId)
-unlockVesting input action oref = do
-  void $ lift $ Contract.waitNSlots 10
+mkVesting' :: [User] -> Schedule -> Value -> AuditM (Input,TxId)
+mkVesting' users schedule val = do
+  ppkhs <- asks (fmap Ledger.unPaymentPubKeyHash . fromUsers (`elem` users))
+
+  let vestingDatum = Input ppkhs schedule
+
+      txSK = Constraints.mustPayToOtherScriptWithInlineDatum
+               Vesting.vestingValHash
+               (toDatum vestingDatum)
+               val
+
+  txId <- lift $ submitBpiTxConstraintsWith @Void mempty txSK []
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  return (vestingDatum, Ledger.getCardanoTxId txId)
+
+unlockVesting :: TxOutRef -> [User] -> Input -> Action -> AuditM (Input, TxId)
+unlockVesting oref users input action = do
+
+  void $ lift $ Contract.waitNSlots 5
 
   utxos <- getVestingUtxos
-  ppkh <- lift Contract.ownFirstPaymentPubKeyHash
+  ppkhs <- mapM userPPkh users
   (_, startTime) <- lift Contract.currentNodeClientTimeRange
 
   let
-     
-      (Disburse newBenficiaries) = action
+      firstUser = head ppkhs
       newInput = input{beneficiaries=newBenficiaries}
-      txSk = Constraints.mustSpendScriptOutput
-                oref (toRedeemer action)
-           <> Constraints.mustPayToPubKey ppkh (totalValueInInput newInput)
-           <> Constraints.mustPayToOtherScriptWithDatumInTx
-               Vesting.vestingValHash
-               (toDatum newInput)
-               mempty
+      (Disburse newBenficiaries) = action
+      validationTime = Ledger.from startTime
 
-      lkps = Constraints.unspentOutputs utxos
-           <> Constraints.otherScript (Versioned Vesting.vestingValidator PlutusV2)
 
-  txId <- lift $ submitBpiTxConstraintsWith @Vesting lkps txSk (mustValidateInFixed (Ledger.from startTime))
+      txSk = mconcat
+        [ Constraints.mustSpendScriptOutput oref (toRedeemer action)
+        , Constraints.mustPayToOtherScriptWithDatumInTx Vesting.vestingValHash (toDatum newInput) mempty
+        , Constraints.mustPayToPubKey firstUser (vestedValue validationTime newInput)
+        , mconcat (map Constraints.mustBeSignedBy ppkhs)
+        ]
+
+      lkps = mconcat
+        [ Constraints.unspentOutputs utxos
+        , Constraints.otherScript (Versioned Vesting.vestingValidator PlutusV2)
+        ]
+
+  txId <- lift $ submitBpiTxConstraintsWith @Vesting lkps txSk (mustValidateInFixed validationTime)
 
   lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
   pure (newInput, Ledger.getCardanoTxId txId)
 
+unlockVesting' :: TxOutRef -> [User] -> Input -> Action -> Value -> AuditM (Input, TxId)
+unlockVesting' oref users input action val = do
 
+  void $ lift $ Contract.waitNSlots 5
+
+  utxos <- getVestingUtxos
+  ppkhs <- mapM userPPkh users
+  (_, startTime) <- lift Contract.currentNodeClientTimeRange
+
+  let
+      firstUser = head ppkhs
+      newInput = input{beneficiaries=newBenficiaries}
+      (Disburse newBenficiaries) = action
+      validationTime = Ledger.from startTime
+
+
+      txSk = mconcat
+        [ Constraints.mustSpendScriptOutput oref (toRedeemer action)
+        , Constraints.mustPayToOtherScriptWithDatumInTx Vesting.vestingValHash (toDatum newInput) mempty
+        , Constraints.mustPayToPubKey firstUser val
+        , mconcat (map Constraints.mustBeSignedBy ppkhs)
+        ]
+
+      lkps = mconcat
+        [ Constraints.unspentOutputs utxos
+        , Constraints.otherScript (Versioned Vesting.vestingValidator PlutusV2)
+        ]
+
+  txId <- lift $ submitBpiTxConstraintsWith @Vesting lkps txSk (mustValidateInFixed validationTime)
+
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  pure (newInput, Ledger.getCardanoTxId txId)
 
 findVestingUtxo :: Vesting.Input -> AuditM (Maybe TxOutRef)
 findVestingUtxo vestingDatum = do
@@ -98,6 +156,16 @@ findVestingUtxo vestingDatum = do
       Contract.datumFromHash (fst _ciTxOutScriptDatum)
     getValidatorDatum _                         = return Nothing
 
+mintNativeTokens :: MintingPolicy -> MintingPolicyHash -> TokenName -> AuditM TxId
+mintNativeTokens mp mpsh tn = do
+  let txSk = Constraints.mustMintCurrencyWithRedeemer mpsh Ledger.unitRedeemer tn 10_000
+      lkps = Constraints.mintingPolicy (Versioned mp PlutusV2)
+
+  txId <- lift $ submitBpiTxConstraintsWith @Void lkps txSk []
+  lift $ Contract.awaitTxConfirmed $ Ledger.getCardanoTxId txId
+  pure (Ledger.getCardanoTxId txId)
+  
+
 getVestingUtxos :: AuditM (Map TxOutRef ChainIndexTxOut)
 getVestingUtxos = lift $ Contract.utxosAt Vesting.vestingAddr
 
@@ -110,5 +178,19 @@ toDatum = Datum . toBuiltinData
 toRedeemer :: forall a. ToData a => a -> Redeemer
 toRedeemer = Redeemer . toBuiltinData
 
--- usersPPkhs :: AuditM (Users 'PKH)
+vestedValue :: POSIXTimeRange -> Input -> Value
+vestedValue timeRange =  foldr (\portion totalAmt -> if predicate portion then Vesting.amount portion <> totalAmt else totalAmt) mempty . Vesting.schedule
+
+  where
+
+    predicate :: Vesting.Portion -> Bool
+    predicate portion = Vesting.deadline portion `Ledger.before` timeRange
+
 usersPPkhs = withUser Andrea  (asks getUsers :: AuditM (Map User Ledger.PaymentPubKeyHash))
+
+userPPkh :: User -> AuditM PaymentPubKeyHash
+userPPkh user = do
+  mppkh <- asks (Map.lookup user . getUsers)
+  case mppkh of
+    Just ppkh -> return ppkh
+    Nothing -> error ("User: " <> show user <> " is not present in the map. This is not possible!")
