@@ -1,0 +1,96 @@
+app/Main.hs:(64,1)-(67,19): Suggestion: Use newtype instead of data
+Found:
+  data WriteOptions
+    = WriteOptions {woOutput :: FilePath}
+    deriving Generic
+Perhaps:
+  newtype WriteOptions
+    = WriteOptions {woOutput :: FilePath}
+    deriving Generic
+Note: decreases laziness
+
+app/Main.hs:153:5-51: Suggestion: Redundant bracket
+Found:
+  (scriptDataToJson ScriptDataJsonDetailedSchema)
+    . Shelley.fromPlutusData . toData
+Perhaps:
+  scriptDataToJson ScriptDataJsonDetailedSchema
+    . Shelley.fromPlutusData . toData
+
+src/Canonical/Vesting.hs:46:1-35: Suggestion: Use newtype instead of data
+Found:
+  data Action = Disburse [PubKeyHash]
+Perhaps:
+  newtype Action = Disburse [PubKeyHash]
+Note: decreases laziness
+
+src/Canonical/Vesting.hs:(184,23)-(206,113): Warning: Redundant if
+Found:
+  if isZero unvested then
+      True
+  else
+      let
+        locked :: Value
+        theOutDatum :: OutputDatum
+        (theOutDatum, !locked)
+          = case scriptOutputsAt thisValidator info of
+              [(x, y)] -> (x, y)
+              _ -> traceError "expected exactly one continuing output"
+        newDatum :: Input
+        newDatum
+          = case theOutDatum of
+              OutputDatum (Datum dbs)
+                -> case fromBuiltinData dbs of
+                     Nothing -> traceError "newDatum conversion failed datum"
+                     Just x -> x
+              OutputDatumHash dh
+                -> case findDatum dh info of
+                     Nothing -> traceError "datum not found"
+                     Just (Datum d)
+                       -> case fromBuiltinData d of
+                            Nothing -> traceError "newDatum conversion failed datum hash"
+                            Just x -> x
+              NoOutputDatum -> traceError "Missing Datum Hash"
+      in
+        traceIfFalse
+          "Datum has been modified!"
+          (datum {beneficiaries = newKeys} == newDatum)
+          &&
+            traceIfFalse
+              "Not enough value remains locked to fulfill vesting schedule"
+              (locked `geq` unvested)
+Perhaps:
+  (isZero unvested
+     ||
+       (let
+          locked :: Value
+          theOutDatum :: OutputDatum
+          (theOutDatum, !locked)
+            = case scriptOutputsAt thisValidator info of
+                [(x, y)] -> (x, y)
+                _ -> traceError "expected exactly one continuing output"
+          newDatum :: Input
+          newDatum
+            = case theOutDatum of
+                OutputDatum (Datum dbs)
+                  -> case fromBuiltinData dbs of
+                       Nothing -> traceError "newDatum conversion failed datum"
+                       Just x -> x
+                OutputDatumHash dh
+                  -> case findDatum dh info of
+                       Nothing -> traceError "datum not found"
+                       Just (Datum d)
+                         -> case fromBuiltinData d of
+                              Nothing -> traceError "newDatum conversion failed datum hash"
+                              Just x -> x
+                NoOutputDatum -> traceError "Missing Datum Hash"
+        in
+          traceIfFalse
+            "Datum has been modified!"
+            (datum {beneficiaries = newKeys} == newDatum)
+            &&
+              traceIfFalse
+                "Not enough value remains locked to fulfill vesting schedule"
+                (locked `geq` unvested)))
+
+4 hints
