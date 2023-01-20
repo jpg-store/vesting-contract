@@ -81,9 +81,10 @@ test-suite vesting-tests
   ghc-options:   -Wall -threaded -rtsopts
   hs-source-dirs: tests
   other-modules:
-    Spec.Vesting
-    Spec.Utils
+    Spec.Mint
     Spec.Setup
+    Spec.Utils
+    Spec.Vesting
   build-depends:
     , base                  >=4.9 && <5
     , bot-plutus-interface
@@ -94,9 +95,12 @@ test-suite vesting-tests
     , plutip
     , plutus-contract
     , plutus-ledger
+    , plutus-ledger-api
     , plutus-ledger-constraints
     , plutus-pab
+    , plutus-script-utils
     , plutus-tx
+    , plutus-tx-plugin
     , tasty
     , text
     , vesting
