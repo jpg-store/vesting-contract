@@ -11,6 +11,7 @@
       url = "github:well-typed/plutonomy/6c01302ba8cf3be4f71617e106cd5ef7ed10fc63";
       flake = false;
     };
+    cardano-cli-balance-fixer.url = "github:Canonical-LLC/cardano-cli-balance-fixer";
   };
 
   outputs = inputs@{ self, nixpkgs, haskell-nix, plutip, ... }:
@@ -49,12 +50,17 @@
                   src = inputs.plutonomy;
                   subdirs = [ "." ];
                 }
+                {
+                  src = inputs.cardano-cli-balance-fixer;
+                  subdirs = [ "." ];
+                }
               ];
               modules = plutip.haskellModules;
               shell = {
-                withHoogle = true;
+                withHoogle = false;
 
                 exactDeps = true;
+                haddock = false;
 
                 # We use the ones from Nixpkgs, since they are cached reliably.
                 # Eventually we will probably want to build these with haskell.nix.
@@ -63,8 +69,10 @@
                   pkgs'.fd
                   pkgs'.hlint
 
+                  project.hsPkgs.plutip.components.exes.local-cluster
                   project.hsPkgs.cardano-cli.components.exes.cardano-cli
                   project.hsPkgs.cardano-node.components.exes.cardano-node
+                  project.hsPkgs.cardano-cli-balance-fixer.components.exes.cardano-cli-balance-fixer
                 ];
 
                 tools.haskell-language-server = "latest";

@@ -1,0 +1,2 @@
+export BLOCKCHAIN=--mainnet
+export BLOCKCHAIN_PREFIX=mainnet

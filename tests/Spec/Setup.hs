@@ -2,7 +2,7 @@
 {-# OPTIONS_GHC -Wno-missing-signatures #-}
 module Spec.Setup
   ( AuditM
-  , Return
+  , VestingTest
   , Users(..)
   , UserData(..)
   , User(..)
@@ -76,7 +76,7 @@ instance Default (Users 'PKH) where
 deriving stock instance (Show (Context d)) => Show (Users d)
 
 type AuditM a = ReaderT (Users 'PKH) (Contract () EmptySchema Text) a
-type Return = (TestWallets, IO (ClusterEnv, NonEmpty BpiWallet) -> TestTree)
+type VestingTest = (TestWallets, IO (ClusterEnv, NonEmpty BpiWallet) -> TestTree)
 type WalletState = State (Users 'Wallet) ()
 
 

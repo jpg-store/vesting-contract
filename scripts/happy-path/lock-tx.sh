@@ -17,16 +17,16 @@ INVALID_DATUM_FILE="$DATUM_DIR/invalid.json"
 
 mkdir -p "$DATUM_DIR"
 
-ARGS="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary-pkh.txt)"
-ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)"
-ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)"
+ARGS="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary-pkh.txt)"
+ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary1-pkh.txt)"
+ARGS="$ARGS --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary2-pkh.txt)"
 
-ARGS1="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt)"
-ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt)"
-ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary3-pkh.txt)"
+ARGS1="--beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary1-pkh.txt)"
+ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary2-pkh.txt)"
+ARGS1="$ARGS1 --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary3-pkh.txt)"
 
 nowSeconds="$(date +%s)"
-lovelaces=0
+lovelaces=2017080
 
 for i in "$@"; do
   timestamp=$(($nowSeconds+$i))
@@ -43,8 +43,8 @@ cabal run vesting-sc -- datum --output "$DATUM_FILE"  $ARGS
 cabal run vesting-sc -- datum --output "$DATUM_FILE1"  $ARGS1
 
 cabal run vesting-sc -- datum --output "$INVALID_DATUM_FILE" \
-  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary1-pkh.txt) \
-  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/pkhs/beneficiary2-pkh.txt) \
+  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary1-pkh.txt) \
+  --beneficiaries $(cat $tempDir/$BLOCKCHAIN_PREFIX/beneficiary2-pkh.txt) \
   --portion $nowSeconds:1000000
 
 $baseDir/hash-plutus.sh
@@ -54,7 +54,8 @@ find $tempDir/$BLOCKCHAIN_PREFIX/datums -name "*.json" \
 
 
 $baseDir/core/lock-tx.sh \
-  $(cat ~/$BLOCKCHAIN_PREFIX/benefactor.addr) \
-  ~/$BLOCKCHAIN_PREFIX/benefactor.skey \
+  $(cat $tempDir/$BLOCKCHAIN_PREFIX/benefactor.addr) \
+  $tempDir/$BLOCKCHAIN_PREFIX/benefactor.skey \
   $(cat $DATUM_HASH_FILE) \
-  "$lovelaces lovelace"
+  "$lovelaces lovelace" \
+  txout
