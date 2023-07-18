@@ -7,23 +7,23 @@ module Canonical.Vesting
   , Schedule
   ) where
 
-import Cardano.Api.Shelley (PlutusScript (..), PlutusScriptV2)
-import Codec.Serialise
-import qualified Data.ByteString.Lazy as LB
-import qualified Data.ByteString.Short as SBS
-import           Plutus.V1.Ledger.Credential
-import           Plutus.V2.Ledger.Contexts
-import           Plutus.V1.Ledger.Scripts
-import           Plutus.V1.Ledger.Address
-import           Plutus.V1.Ledger.Value
-import           Plutus.V1.Ledger.Crypto
-import           Plutus.V2.Ledger.Tx
-import           Plutus.V1.Ledger.Time
-import           Plutus.V1.Ledger.Interval
-import PlutusTx
-import PlutusTx.Prelude hiding (Semigroup (..), unless)
-import Canonical.Shared
+import           Canonical.Shared
+import           Cardano.Api.Shelley         (PlutusScript (..), PlutusScriptV2)
+import           Codec.Serialise
+import qualified Data.ByteString.Lazy        as LB
+import qualified Data.ByteString.Short       as SBS
 import qualified Plutonomy
+import           Plutus.V1.Ledger.Address
+import           Plutus.V1.Ledger.Credential
+import           Plutus.V1.Ledger.Crypto
+import           Plutus.V1.Ledger.Interval
+import           Plutus.V1.Ledger.Scripts
+import           Plutus.V1.Ledger.Time
+import           Plutus.V1.Ledger.Value
+import           Plutus.V2.Ledger.Contexts
+import           Plutus.V2.Ledger.Tx
+import           PlutusTx
+import           PlutusTx.Prelude            hiding (Semigroup (..), unless)
 #include "DebugUtilities.h"
 
 -------------------------------------------------------------------------------
@@ -31,14 +31,14 @@ import qualified Plutonomy
 -------------------------------------------------------------------------------
 data Portion = Portion
   { deadline :: POSIXTime
-  , amount :: Value
+  , amount   :: Value
   }
 
 type Schedule = [Portion]
 
 data Input = Input
   { beneficiaries :: [PubKeyHash]
-  , schedule :: Schedule
+  , schedule      :: Schedule
   }
 
 data Action = Disburse [PubKeyHash]
@@ -83,7 +83,7 @@ transaction to unlock the value from schedule B.
 isScriptAddress :: Address -> Bool
 isScriptAddress Address { addressCredential } = case addressCredential of
   ScriptCredential _ -> True
-  _ -> False
+  _                  -> False
 
 -- Verify that there is only one script input and get it's
 {-# INLINABLE onlyOneScriptInput #-}
@@ -95,7 +95,7 @@ onlyOneScriptInput info =
 
   in case filter isScriptInput . txInfoInputs $ info of
     [_] -> True
-    _ ->  False
+    _   ->  False
 
 getOnlyOfThisTypeContinuingOutputsAndDatum
   :: DataConstraint(a)
@@ -128,7 +128,7 @@ getOnlyInputValueOfThisScript vh outs =
       outs
   in case thisScriptInputs of
     [TxInInfo {..}] -> txOutValue txInInfoResolved
-    _ -> TRACE_ERROR("Wrong count of this script")
+    _               -> TRACE_ERROR("Wrong count of this script")
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
@@ -175,7 +175,12 @@ mkValidator datum action ctx =
 
         -- Total value left to vest, e.g. the amount that must stay locked.
         unvested :: Value
-        unvested = mconcat . fmap amount . filter (not . isVested) . schedule $ datum
+        unvested = foldr (\ !portion !totalAmt ->
+                            if isVested portion
+                            then totalAmt
+                            else mappend (amount portion) totalAmt
+                        ) mempty
+                . schedule $ datum
 
         outputValid :: Bool
         outputValid = if isZero unvested
