@@ -26,6 +26,11 @@ const beneficiaries = await mapAsync(beneficiariesNames, async (name) => {
   };
 });
 
+const beneficiariesPkhs = beneficiaries.map(
+  (beneficiary) =>
+    lucid.utils.getAddressDetails(beneficiary.address).paymentCredential?.hash!
+);
+
 const emulator = new Emulator(
   beneficiaries.map((beneficiary, idx) => ({
     address: beneficiary.address,
@@ -45,32 +50,57 @@ const me = await lucid.wallet.address();
 const validator = await getValidator();
 const vestingAddr = lucid.utils.validatorToAddress(validator);
 
-Deno.test("Normally vesting $JPG", async () => {
+// Deno.test("Normally vesting $JPG", async () => {
+//   await vest({
+//     beneficiaries: beneficiariesPkhs,
+//     portions: [
+//       {
+//         amount: $jpg(JPG_TOTAL_SUPPLY / 2n),
+//         deadline: 19999n,
+//       },
+//       {
+//         amount: $jpg(JPG_TOTAL_SUPPLY / 4n),
+//         deadline: 39999n,
+//       },
+//       {
+//         amount: $jpg(JPG_TOTAL_SUPPLY / 4n),
+//         deadline: 59999n,
+//       },
+//     ],
+//   });
+
+//   emulator.awaitBlock(1); // this adds 20k slots
+//   time.tick(20000);
+
+//   await tryUnvest(JPG_TOTAL_SUPPLY / 2n);
+
+//   emulator.awaitBlock(1);
+//   time.tick(20000);
+
+//   await tryUnvest(JPG_TOTAL_SUPPLY / 4n);
+
+//   emulator.awaitBlock(1);
+//   time.tick(20000);
+
+//   await tryUnvest(JPG_TOTAL_SUPPLY / 4n);
+// });
+
+Deno.test("Long vesting schedule", async () => {
+  const numSchedules = 24;
   await vest({
-    beneficiaries: beneficiaries.map(
-      (beneficiary) =>
-        lucid.utils.getAddressDetails(beneficiary.address).paymentCredential
-          ?.hash!
-    ),
-    portions: [
-      {
-        amount: $jpg(JPG_TOTAL_SUPPLY / 2n),
-        deadline: 100n,
-      },
-      {
-        amount: $jpg(JPG_TOTAL_SUPPLY / 4n),
-        deadline: 200n,
-      },
-      {
-        amount: $jpg(JPG_TOTAL_SUPPLY / 4n),
-        deadline: 300n,
-      },
-    ],
+    beneficiaries: beneficiariesPkhs,
+    portions: genVestingSchedule(numSchedules),
   });
 
   emulator.awaitBlock(1);
+  time.tick(20000);
 
-  await tryUnvest(JPG_TOTAL_SUPPLY / 2n, JPG_TOTAL_SUPPLY);
+  for (let i = 0; i < numSchedules; i++) {
+    emulator.awaitBlock(1);
+    time.tick(20000);
+
+    await tryUnvest(JPG_TOTAL_SUPPLY / BigInt(numSchedules));
+  }
 });
 
 function $jpg(amt: bigint) {
@@ -80,6 +110,19 @@ function $jpg(amt: bigint) {
   outer.set(JPG_CURRENCY_SYMBOL, inner);
 
   return outer;
+}
+
+function genVestingSchedule(numPortions: number) {
+  const portions = [];
+
+  for (let i = 0; i < numPortions; i++) {
+    portions.push({
+      amount: $jpg(JPG_TOTAL_SUPPLY / BigInt(numPortions)),
+      deadline: 20000n * BigInt(i + 1),
+    });
+  }
+
+  return portions;
 }
 
 async function vest(vesting: typeof Vesting) {
@@ -98,12 +141,14 @@ async function vest(vesting: typeof Vesting) {
   console.log("Money has been vested!");
 }
 
-async function tryUnvest(jpgAmount: bigint, jpgRemaining: bigint) {
+async function tryUnvest(jpgAmount: bigint) {
   try {
     console.log("Trying to unvest...");
 
     const utxosAtVesting = await lucid.utxosAt(vestingAddr);
     const vestingUtxo = utxosAtVesting[0];
+    const jpgRemaining =
+      vestingUtxo.assets[JPG_CURRENCY_SYMBOL + JPG_ASSET_NAME];
     const prevDatum = await lucid.datumOf(vestingUtxo);
 
     const redeemer = Data.to(
@@ -115,8 +160,6 @@ async function tryUnvest(jpgAmount: bigint, jpgRemaining: bigint) {
       },
       VestingAction
     );
-
-    time.tick(2000);
 
     const txComplete = await lucid
       .newTx()
