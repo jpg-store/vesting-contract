@@ -111,10 +111,10 @@ getOnlyOfThisTypeContinuingOutputsAndDatum datums vh outs =
       outs
   in case thisScriptInputs of
     [TxOut {..}] -> case txOutDatum of
-      OutputDatum (Datum dbs) -> (FROM_BUILT_IN_DATA("getOnlyOfThisTypeContinuingOutputsAndDatum conversion failed datum", dbs), txOutValue)
+      OutputDatum (Datum dbs) -> (FROM_BUILT_IN_DATA("getOnlyOfThisTypeContinuingOutputsAndDatum conversion failed datum", "12", dbs), txOutValue)
       OutputDatumHash dh -> (extractData datums dh, txOutValue)
-      NoOutputDatum -> TRACE_ERROR("Missing Datum Hash")
-    _ -> TRACE_ERROR("Wrong count of this script")
+      NoOutputDatum -> TRACE_ERROR("Missing Datum Hash","13")
+    _ -> TRACE_ERROR("Wrong count of this script","14")
 
 getOnlyInputValueOfThisScript
   :: ValidatorHash
@@ -128,7 +128,7 @@ getOnlyInputValueOfThisScript vh outs =
       outs
   in case thisScriptInputs of
     [TxInInfo {..}] -> txOutValue txInInfoResolved
-    _               -> TRACE_ERROR("Wrong count of this script")
+    _ -> TRACE_ERROR("Wrong count of this script", "15")
 
 
 signedByAMajority :: [PubKeyHash] -> [PubKeyHash] -> Bool
@@ -191,22 +191,22 @@ mkValidator datum action ctx =
               theOutDatum :: OutputDatum
               (theOutDatum, !locked) = case scriptOutputsAt thisValidator info of
                 [(x, y)] -> (x, y)
-                _ -> TRACE_ERROR("expected exactly one continuing output")
+                _ -> TRACE_ERROR("expected exactly one continuing output", "1")
 
               newDatum :: Input
               newDatum = case theOutDatum of
-                OutputDatum (Datum dbs) -> FROM_BUILT_IN_DATA("newDatum conversion failed datum", dbs)
+                OutputDatum (Datum dbs) -> FROM_BUILT_IN_DATA("newDatum conversion failed datum", "2", dbs)
                 OutputDatumHash dh -> case findDatum dh info of
-                  Nothing -> TRACE_ERROR("datum not found")
-                  Just (Datum d) -> FROM_BUILT_IN_DATA("newDatum conversion failed datum hash", d)
-                NoOutputDatum -> TRACE_ERROR("Missing Datum Hash")
+                  Nothing -> TRACE_ERROR("datum not found", "3")
+                  Just (Datum d) -> FROM_BUILT_IN_DATA("newDatum conversion failed datum hash","4", d)
+                NoOutputDatum -> TRACE_ERROR("Missing Datum Hash", "5")
 
             -- Ensure the datum has not been modified.
-            in TRACE_IF_FALSE("Datum has been modified!",
+            in TRACE_IF_FALSE("Datum has been modified!","6",
                 (datum { beneficiaries = newKeys } == newDatum))
               -- Make sure there is enough still locked in the script
               -- to satisfy the remainder of unvested portions to be fulfilled.
-            && TRACE_IF_FALSE("Not enough value remains locked to fulfill vesting schedule",
+            && TRACE_IF_FALSE("Not enough value remains locked to fulfill vesting schedule","8",
                 (locked `geq` unvested))
 
         signedByEnoughBeneficiaries :: Bool
@@ -215,10 +215,10 @@ mkValidator datum action ctx =
         newKeysAreNotEmpty :: Bool
         newKeysAreNotEmpty = not (null newKeys)
 
-      in TRACE_IF_FALSE("expected exactly one script input", (onlyOneScriptInput info))
-      && TRACE_IF_FALSE("Beneficiary's signature missing", signedByEnoughBeneficiaries)
+      in TRACE_IF_FALSE("expected exactly one script input","9", (onlyOneScriptInput info))
+      && TRACE_IF_FALSE("Beneficiary's signature missing", "10", signedByEnoughBeneficiaries)
       && outputValid
-      && TRACE_IF_FALSE("New Beneficiaries are empty", newKeysAreNotEmpty)
+      && TRACE_IF_FALSE("New Beneficiaries are empty","11", newKeysAreNotEmpty)
 
 -------------------------------------------------------------------------------
 -- Boilerplate
