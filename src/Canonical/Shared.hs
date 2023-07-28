@@ -12,7 +12,7 @@ extractDatumBytes datums dh = getDatum $ extractDatum datums dh
 extractDatum :: [(DatumHash, Datum)] -> DatumHash -> Datum
 extractDatum datums dh = go datums where
   go = \case
-    [] -> TRACE_ERROR("Failed to find datum")
+    [] -> TRACE_ERROR("Failed to find datum", "s0")
     (x, y):xs ->
       if x == dh then
         y
@@ -24,7 +24,7 @@ extractData :: forall a. DataConstraint(a) => [(DatumHash, Datum)] -> DatumHash 
 extractData ds dh =
   let
     a = extractDatumBytes ds dh
-  in FROM_BUILT_IN_DATA("extractData failed", a)
+  in FROM_BUILT_IN_DATA("extractData failed","s1", a)
 
 wrap  :: forall a b c .
             ( DataConstraint(a)
@@ -39,7 +39,7 @@ wrap  :: forall a b c .
 wrap f a b c
   = check
     ( f
-        ( FROM_BUILT_IN_DATA("datum failed", a))
-        ( FROM_BUILT_IN_DATA("redeemer failed", b))
-        ( FROM_BUILT_IN_DATA("script context failed", c))
+        ( FROM_BUILT_IN_DATA("datum failed", "s2", a))
+        ( FROM_BUILT_IN_DATA("redeemer failed", "s3",b))
+        ( FROM_BUILT_IN_DATA("script context failed","s4", c))
     )
